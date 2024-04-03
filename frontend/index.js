@@ -59,7 +59,7 @@ function VersiumEnrichment() {
 
   return (
     <Box
-      // center the button/loading spinner horizontally and vertically.
+      // Center the content horizontally and vertically
       position="absolute"
       top="0"
       bottom="0"
@@ -69,24 +69,33 @@ function VersiumEnrichment() {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
+      padding={3} // Add some padding around the content
     >
+      <h2 style={{ textAlign: "center", marginBottom: "16px" }}>
+        🌟Data Enrichment
+      </h2>
+      <p style={{ textAlign: "center", marginBottom: "40px", maxWidth: "80%" }}>
+        Enrich your leads with business information, insights, emails and more.
+      </p>
       {isUpdateInProgress ? (
         <Loader />
       ) : (
         <Fragment>
           <Button
             variant="primary"
+            size="large" // Make the button larger
             onClick={onButtonClick}
             disabled={!permissionCheck.hasPermission}
+            icon="plus" // Add an icon to the button (Assuming Airtable Blocks support button icons)
             marginBottom={3}
           >
-            Fetch company records
+           Start enriching
           </Button>
-          {!permissionCheck.hasPermission &&
-            // when we don't have permission to perform the update, we want to tell the
-            // user why. `reasonDisplayString` is a human-readable string that will
-            // explain why the button is disabled.
-            permissionCheck.reasonDisplayString}
+          {!permissionCheck.hasPermission && (
+            <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
+              {permissionCheck.reasonDisplayString}
+            </p>
+          )}
         </Fragment>
       )}
     </Box>
