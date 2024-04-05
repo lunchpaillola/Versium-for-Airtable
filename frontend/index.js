@@ -5,8 +5,10 @@ import {
   Loader,
   Button,
   Box,
+  useGlobalConfig,
 } from "@airtable/blocks/ui";
 import React, { Fragment, useState } from "react";
+import OnboardingScreen from "./OnboardingScreen";
 
 const TABLE_NAME = "Leads";
 const LINKEDIN_FIELD_NAME = "Linkedin";
@@ -33,14 +35,20 @@ function VersiumEnrichment() {
   // we only need to load the word field - the others don't get read, only written to.
   const records = useRecords(table, { fields: [LinkedinField] });
 
-  // keep track of whether we have up update currently in progress - if there is, we want to hide
-  // the update button so you can't have two updates running at once.
   const [isUpdateInProgress, setIsUpdateInProgress] = useState(false);
+  const globalConfig = useGlobalConfig();
+  const apiKey = globalConfig.get("apiKey");
 
-  // check whether we have permission to update our records or not. Any time we do a permissions
-  // check like this, we can pass in undefined for values we don't yet know. Here, as we want to
-  // make sure we can update the Output field, we make sure to include them even
-  // though we don't know the values we want to use for them yet.
+  if (!apiKey) {
+    return (
+      <OnboardingScreen
+        onComplete={() => {
+          /* Logic to handle completion of onboarding */
+        }}
+      />
+    );
+  }
+
   const permissionCheck = table.checkPermissionsForUpdateRecord(undefined, {
     [FIRST_NAME_OUTPUT_FIELD_NAME]: undefined,
     [LAST_NAME_OUTPUT_FIELD_NAME]: undefined,
@@ -52,7 +60,12 @@ function VersiumEnrichment() {
 
   async function onButtonClick() {
     setIsUpdateInProgress(true);
-    const recordUpdates = await getEnrichment(table, LinkedinField, records);
+    const recordUpdates = await getEnrichment(
+      table,
+      LinkedinField,
+      records,
+      apiKey
+    );
     await updateRecordsInBatchesAsync(table, recordUpdates);
     setIsUpdateInProgress(false);
   }
@@ -89,7 +102,7 @@ function VersiumEnrichment() {
             icon="plus" // Add an icon to the button (Assuming Airtable Blocks support button icons)
             marginBottom={3}
           >
-           Start enriching
+            Start enriching
           </Button>
           {!permissionCheck.hasPermission && (
             <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
@@ -102,7 +115,7 @@ function VersiumEnrichment() {
   );
 }
 
-async function getEnrichment(table, LinkedinField, records) {
+async function getEnrichment(table, apiKey, LinkedinField, records) {
   const recordUpdates = [];
   for (const record of records) {
     // For each record, we take the email address and make an API request to Versium:
@@ -114,7 +127,7 @@ async function getEnrichment(table, LinkedinField, records) {
     const response = await fetch(requestUrl, {
       method: "GET", // The Versium API requires a GET request.
       headers: {
-        "X-Versium-Api-Key": "<versium api key>", // Make sure to replace '<Your Versium API Key Here>' with your actual API key.
+        "X-Versium-Api-Key": apiKey, // Make sure to replace '<Your Versium API Key Here>' with your actual API key.
       },
     });
 
