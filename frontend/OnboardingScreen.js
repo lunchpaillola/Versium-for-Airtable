@@ -67,30 +67,52 @@ function OnboardingScreen({ onComplete }) {
   };
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      alignItems="center"
-      padding={3}
-    >
-      <h1>Welcome to Data Enrichment!</h1>
-      <Text>Enter your API key to get started:</Text>
+    <Box display="flex" flexDirection="column" padding={3}>
+      {/* Centered Title with more emphasis */}
+      <h1
+        style={{
+          textAlign: "center",
+          fontWeight: "bold",
+          marginBottom: "16px",
+        }}
+      >
+        Versium Extension
+      </h1>
+
+      {/* Clear instruction */}
+      <Text style={{ paddingBottom: "12px" }}>
+        Enter your API key to get started:
+      </Text>
+
+      {/* Input field with clear action */}
       <Input
         value={apiKey}
         onChange={(e) => setApiKey(e.target.value)}
         placeholder="Enter your API Key"
+        style={{ marginBottom: "24px" }} // Adds space before the button
       />
+
+      {/* Conditional Loading or Action Button */}
       {isLoading ? (
         <Loader />
       ) : (
-        <Button onClick={handleComplete} marginTop={3}>
+        <Button
+          onClick={handleComplete}
+          style={{ backgroundColor: "#007bff", color: "#ffffff" }} // Style the button with a distinct color for primary action
+        >
           Complete Setup
         </Button>
       )}
+
+      {/* Error handling with improved UX */}
       {error && (
-        <Dialog onClose={() => setError("")} width="320px">
-          <Text>{error}</Text>
+        <Dialog
+          onClose={() => setError("")}
+          width="320px"
+          style={{ marginTop: "12px" }}
+        >
+          <Text style={{ color: "red" }}>{error}</Text>{" "}
+          {/* Error message in red for immediate attention */}
         </Dialog>
       )}
     </Box>
