@@ -47,30 +47,51 @@ function OnboardingScreen({ onComplete }) {
       }))
     : [];
 
+  /**
+   * Validates the provided API key by making a request to the API.
+   * If the API key is valid, updates the UI and global configuration.
+   *
+   * @param {string} apiKey - The API key to validate.
+   * @return {Promise<boolean>} - Returns `true` if the API key is valid, otherwise `false`.
+   */
   const validateApiKey = async (apiKey) => {
-    const testUrl = "https://api.versium.com/v2/contact?";
-    console.log("testing apikey");
+    const testUrl = "https://api.versium.com/v2/contact";
+    console.log("Validating apiKey:", apiKey);
+
     try {
       const response = await fetch(testUrl, {
+        method: "GET", // Specify the method if needed, usually 'GET' for validation
         headers: {
           "x-versium-api-key": apiKey,
         },
       });
+
+      // Parse the JSON response
       const data = await response.json();
+
+      // Check for unauthorized error or specific API error messages indicating an invalid API key
       if (
-        data.versium.errors &&
-        data.versium.errors.includes("Invalid api key provided.")
+        response.status === 401 ||
+        (data.versium &&
+          data.versium.errors &&
+          data.versium.errors.includes("Invalid api key provided."))
       ) {
+        console.error(
+          "Invalid API Key provided. Please check your key and try again."
+        );
         setError(
           "Invalid API Key provided. Please check your key and try again."
         );
         return false; // API key is invalid
       }
+
+      // If the code reaches here, assume the API key is valid
       setCurrentStep("TABLE_SELECTION");
+      await globalConfig.setAsync("API Key", { apiKey });
       return true; // API key is valid
     } catch (err) {
       console.error("Error validating API key:", err);
-      return false; // Assume invalid on error
+      return false; // Assume the API key is invalid in case of an error
     }
   };
 
@@ -87,7 +108,14 @@ function OnboardingScreen({ onComplete }) {
           setIsLoading(false);
           return;
         }
-        setCurrentStep("VIEW_SELECTION");
+        try {
+          await globalConfig.setAsync("Table", { selectedTableId });
+          setCurrentStep("VIEW_SELECTION");
+        } catch (error) {
+          console.error("Error updating globalConfig:", error);
+          setError("An error occurred while updating the configuration.");
+          setIsLoading(false);
+        }
         break;
 
       case "VIEW_SELECTION":
@@ -96,14 +124,41 @@ function OnboardingScreen({ onComplete }) {
           setIsLoading(false);
           return;
         }
-        setCurrentStep("FIELD_MAPPING");
+        try {
+          await globalConfig.setAsync("View", { selectedViewId });
+          setCurrentStep("INPUT_FIELD_MAPPING");
+        } catch (error) {
+          console.error("Error updating globalConfig:", error);
+          setError("An error occurred while updating the configuration.");
+          setIsLoading(false);
+        }
         break;
 
-      case "FIELD_MAPPING":
+      case "INPUT_FIELD_MAPPING":
+        if (!selectedLinkedinId) {
+          setError("Please select a field to provide LinkedIn.");
+          setIsLoading(false);
+          return;
+        }
+        try {
+          await globalConfig.setAsync("LinkedIn", {
+            linkedin: selectedLinkedinId,
+          });
+          setCurrentStep("OUTPUT_FIELD_MAPPING");
+        } catch (error) {
+          console.error("Error updating globalConfig:", error);
+          setError("An error occurred while updating the configuration.");
+          setIsLoading(false);
+        }
+        break;
+
+      case "OUTPUT_FIELD_MAPPING":
         // You should validate field selections here as well, similar to the API key validation
         if (
-          !selectedLinkedinId ||
-          !selectedEmailId /* include other fields as needed */
+          !selectedEmailId ||
+          !selectedTitleId ||
+          !selectedBusinessId ||
+          !selectedDomainId
         ) {
           setError("Please complete all field mappings.");
           setIsLoading(false);
@@ -112,12 +167,8 @@ function OnboardingScreen({ onComplete }) {
 
         // Finalize setup and save configurations
         try {
-          await globalConfig.setAsync("onboardingConfig", {
-            apiKey,
-            selectedTableId,
-            selectedViewId,
+          await globalConfig.setAsync("fieldMappings", {
             fieldMappings: {
-              linkedin: selectedLinkedinId,
               email: selectedEmailId,
               title: selectedTitleId,
               business: selectedBusinessId,
@@ -189,7 +240,7 @@ function OnboardingScreen({ onComplete }) {
             width="320px"
           />
           <Button
-            onClick={() => setCurrentStep("VIEW_SELECTION")}
+            onClick={handleComplete}
             disabled={!selectedTableId}
             marginTop={3}
             style={{ backgroundColor: "#007bff", color: "#ffffff" }}
@@ -210,21 +261,22 @@ function OnboardingScreen({ onComplete }) {
             width="320px"
           />
           <Button
-            onClick={() => setCurrentStep("FIELD_MAPPING")}
+            onClick={handleComplete}
             disabled={!selectedViewId}
             marginTop={3}
             style={{ backgroundColor: "#007bff", color: "#ffffff" }}
           >
-            Next: Map Fields
+            Next: Map Input Field
           </Button>
         </>
       )}
 
-      {currentStep === "FIELD_MAPPING" && selectedTableId && (
+      {currentStep === "INPUT_FIELD_MAPPING" && selectedTableId && (
         <>
-          {/* Field Mapping Step */}
-          <Text paddingBottom={3}>Map the fields:</Text>
-
+          {/* View Selection Step */}
+          <Text paddingBottom={3}>
+            Select the LinkedIn url that the extension should enrich:
+          </Text>
           {/* LinkedIn ID Field Mapping */}
           <Select
             options={fields}
@@ -233,10 +285,31 @@ function OnboardingScreen({ onComplete }) {
             width="320px"
             placeholder="LinkedIn ID Field"
           />
+          <Button
+            onClick={handleComplete}
+            disabled={!selectedViewId}
+            marginTop={3}
+            style={{ backgroundColor: "#007bff", color: "#ffffff" }}
+          >
+            Next: Map Output Fields
+          </Button>
+        </>
+      )}
+
+      {currentStep === "OUTPUT_FIELD_MAPPING" && selectedTableId && (
+        <>
+          {/* Field Mapping Step */}
+          <Text paddingBottom={3}>Map Output fields:</Text>
 
           {/* Email Field Mapping */}
           <Select
-            options={fields}
+            options={fields.filter(
+              (field) =>
+                field.id !== selectedLinkedinId &&
+                field.id !== selectedTitleId &&
+                field.id !== selectedBusinessId &&
+                field.id !== selectedDomainId
+            )}
             value={selectedEmailId}
             onChange={(newValue) => setEmailId(newValue)}
             width="320px"
@@ -245,7 +318,13 @@ function OnboardingScreen({ onComplete }) {
 
           {/* Title Field Mapping */}
           <Select
-            options={fields}
+            options={fields.filter(
+              (field) =>
+                field.id !== selectedLinkedinId &&
+                field.id !== selectedEmailId &&
+                field.id !== selectedBusinessId &&
+                field.id !== selectedDomainId
+            )}
             value={selectedTitleId}
             onChange={(newValue) => setTitleId(newValue)}
             width="320px"
@@ -254,7 +333,13 @@ function OnboardingScreen({ onComplete }) {
 
           {/* Business Field Mapping */}
           <Select
-            options={fields}
+            options={fields.filter(
+              (field) =>
+                field.id !== selectedLinkedinId &&
+                field.id !== selectedEmailId &&
+                field.id !== selectedTitleId &&
+                field.id !== selectedDomainId
+            )}
             value={selectedBusinessId}
             onChange={(newValue) => setBusinessId(newValue)}
             width="320px"
@@ -263,26 +348,27 @@ function OnboardingScreen({ onComplete }) {
 
           {/* Domain Field Mapping */}
           <Select
-            options={fields}
+            options={fields.filter(
+              (field) =>
+                field.id !== selectedLinkedinId &&
+                field.id !== selectedEmailId &&
+                field.id !== selectedTitleId &&
+                field.id !== selectedBusinessId
+            )}
             value={selectedDomainId}
             onChange={(newValue) => setDomainId(newValue)}
             width="320px"
             placeholder="Domain Field"
           />
 
-          {/* Title, Business, Domain Field Mappings */}
-
           <Button
             onClick={handleComplete}
             disabled={
               !(
-                (
-                  selectedLinkedinId &&
-                  selectedEmailId &&
-                  selectedTitleId &&
-                  selectedDomainId &&
-                  selectedBusinessId
-                ) /* Check other fields similarly */
+                selectedEmailId &&
+                selectedTitleId &&
+                selectedDomainId &&
+                selectedBusinessId
               )
             }
             marginTop={3}
