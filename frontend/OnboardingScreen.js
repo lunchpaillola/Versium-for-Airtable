@@ -14,19 +14,37 @@ import React, { useState } from "react";
 function OnboardingScreen({ onComplete }) {
   const base = useBase();
   const globalConfig = useGlobalConfig();
-  const [apiKey, setApiKey] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [currentStep, setCurrentStep] = useState("API_KEY"); // Steps: 'API_KEY', 'TABLE_VIEW_SELECTION' , 'INPUT_FIELD_SELECTION', 'OUTPUT_FIELD_SELECTION'
-  const [selectedTableId, setSelectedTableId] = useState(null);
-  const [selectedViewId, setSelectedViewId] = useState(null);
 
-  //States for field mapping
-  const [selectedLinkedinId, setLinkedinId] = useState(null);
-  const [selectedEmailId, setEmailId] = useState(null);
-  const [selectedTitleId, setTitleId] = useState(null);
-  const [selectedBusinessId, setBusinessId] = useState(null);
-  const [selectedDomainId, setDomainId] = useState(null);
+  const [state, setState] = useState({
+    apiKey: "",
+    isLoading: false,
+    error: "",
+    currentStep: "API_KEY", // Steps: 'API_KEY', 'TABLE_VIEW_SELECTION', 'INPUT_FIELD_SELECTION', 'OUTPUT_FIELD_SELECTION'
+    selectedTableId: null,
+    selectedViewId: null,
+    selectedLinkedinId: null,
+    selectedEmailId: null,
+    selectedTitleId: null,
+    selectedBusinessId: null,
+    selectedDomainId: null,
+  });
+
+  const updateState = (updates) =>
+    setState((prev) => ({ ...prev, ...updates }));
+
+  const {
+    apiKey,
+    isLoading,
+    error,
+    currentStep,
+    selectedTableId,
+    selectedViewId,
+    selectedLinkedinId,
+    selectedEmailId,
+    selectedTitleId,
+    selectedBusinessId,
+    selectedDomainId,
+  } = state;
 
   const tables = base.tables.map((table) => ({
     value: table.id,
@@ -79,14 +97,15 @@ function OnboardingScreen({ onComplete }) {
         console.error(
           "Invalid API Key provided. Please check your key and try again."
         );
-        setError(
-          "Invalid API Key provided. Please check your key and try again."
-        );
+        updateState({
+          error:
+            "Invalid API Key provided. Please check your key and try again.",
+        });
         return false; // API key is invalid
       }
 
       // If the code reaches here, assume the API key is valid
-      setCurrentStep("TABLE_SELECTION");
+      updateState({ currentStep: "TABLE_SELECTION" });
       await globalConfig.setAsync("API Key", { apiKey });
       return true; // API key is valid
     } catch (err) {
@@ -96,7 +115,7 @@ function OnboardingScreen({ onComplete }) {
   };
 
   const handleComplete = async () => {
-    setIsLoading(true);
+    updateState({ isLoading: true });
 
     switch (currentStep) {
       case "API_KEY":
@@ -104,51 +123,66 @@ function OnboardingScreen({ onComplete }) {
 
       case "TABLE_SELECTION":
         if (!selectedTableId) {
-          setError("Please select a table.");
-          setIsLoading(false);
+          updateState({ error: "Please select a table.", isLoading: false });
           return;
         }
         try {
           await globalConfig.setAsync("Table", { selectedTableId });
-          setCurrentStep("VIEW_SELECTION");
+          updateState({
+            currentStep: "VIEW_SELECTION",
+          });
         } catch (error) {
           console.error("Error updating globalConfig:", error);
-          setError("An error occurred while updating the configuration.");
-          setIsLoading(false);
+          updateState({
+            error: "An error occurred while updating the configuration.",
+            isLoading: false,
+          });
         }
         break;
 
       case "VIEW_SELECTION":
         if (!selectedViewId) {
-          setError("Please select a view.");
-          setIsLoading(false);
+          updateState({
+            error: "Please select a view.",
+            isLoading: false,
+          });
           return;
         }
         try {
           await globalConfig.setAsync("View", { selectedViewId });
-          setCurrentStep("INPUT_FIELD_MAPPING");
+          updateState({
+            currentStep: "INPUT_FIELD_MAPPING",
+          });
         } catch (error) {
           console.error("Error updating globalConfig:", error);
-          setError("An error occurred while updating the configuration.");
-          setIsLoading(false);
+          updateState({
+            error: "An error occurred while updating the configuration.",
+            isLoading: false,
+          });
         }
         break;
 
       case "INPUT_FIELD_MAPPING":
         if (!selectedLinkedinId) {
-          setError("Please select a field to provide LinkedIn.");
-          setIsLoading(false);
+          updateState({
+            error: "Please select a field to provide LinkedIn.",
+            isLoading: false,
+          });
           return;
         }
         try {
           await globalConfig.setAsync("LinkedIn", {
             linkedin: selectedLinkedinId,
           });
-          setCurrentStep("OUTPUT_FIELD_MAPPING");
+          updateState({
+            currentStep: "OUTPUT_FIELD_MAPPING",
+          });
         } catch (error) {
           console.error("Error updating globalConfig:", error);
-          setError("An error occurred while updating the configuration.");
-          setIsLoading(false);
+          updateState({
+            error: "An error occurred while updating the configuration.",
+            isLoading: false,
+          });
         }
         break;
 
@@ -160,8 +194,10 @@ function OnboardingScreen({ onComplete }) {
           !selectedBusinessId ||
           !selectedDomainId
         ) {
-          setError("Please complete all field mappings.");
-          setIsLoading(false);
+          updateState({
+            error: "Please complete all field mappings.",
+            isLoading: false,
+          });
           return;
         }
 
@@ -178,16 +214,22 @@ function OnboardingScreen({ onComplete }) {
           onComplete();
         } catch (error) {
           console.error("Error saving onboarding configuration:", error);
-          setError("Failed to save onboarding configuration.");
+          updateState({
+            error: "Failed to save onboarding configuration.",
+          });
         }
         break;
 
       default:
-        setError("Unexpected step encountered.");
+        updateState({
+          error: "Unexpected step encountered.",
+        });
         break;
     }
 
-    setIsLoading(false); // Move loading state change here to ensure it's always executed at the end
+    updateState({
+      isLoading: false,
+    });
   };
 
   return (
@@ -209,7 +251,11 @@ function OnboardingScreen({ onComplete }) {
           </Text>
           <Input
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={(e) =>
+              updateState({
+                apiKey: e.target.value,
+              })
+            }
             placeholder="Enter your API Key"
             style={{ marginBottom: "24px" }}
           />
@@ -234,8 +280,10 @@ function OnboardingScreen({ onComplete }) {
             options={tables}
             value={selectedTableId}
             onChange={(newValue) => {
-              setSelectedTableId(newValue);
-              setSelectedViewId(null); // Reset view selection when table changes
+              updateState({
+                selectedTableId: newValue,
+                selectedViewId: null, // Reset view selection when table changes
+              });
             }}
             width="320px"
           />
@@ -257,7 +305,11 @@ function OnboardingScreen({ onComplete }) {
           <Select
             options={views}
             value={selectedViewId}
-            onChange={(newValue) => setSelectedViewId(newValue)}
+            onChange={(newValue) =>
+              updateState({
+                selectedViewId: newValue,
+              })
+            }
             width="320px"
           />
           <Button
@@ -281,7 +333,11 @@ function OnboardingScreen({ onComplete }) {
           <Select
             options={fields}
             value={selectedLinkedinId}
-            onChange={(newValue) => setLinkedinId(newValue)}
+            onChange={(newValue) =>
+              updateState({
+                selectedLinkedinId: newValue,
+              })
+            }
             width="320px"
             placeholder="LinkedIn ID Field"
           />
@@ -311,7 +367,11 @@ function OnboardingScreen({ onComplete }) {
                 field.id !== selectedDomainId
             )}
             value={selectedEmailId}
-            onChange={(newValue) => setEmailId(newValue)}
+            onChange={(newValue) =>
+              updateState({
+                selectedEmailId: newValue,
+              })
+            }
             width="320px"
             placeholder="Email Field"
           />
@@ -326,7 +386,11 @@ function OnboardingScreen({ onComplete }) {
                 field.id !== selectedDomainId
             )}
             value={selectedTitleId}
-            onChange={(newValue) => setTitleId(newValue)}
+            onChange={(newValue) =>
+              updateState({
+                selectedTitleId: newValue,
+              })
+            }
             width="320px"
             placeholder="Title Field"
           />
@@ -341,7 +405,11 @@ function OnboardingScreen({ onComplete }) {
                 field.id !== selectedDomainId
             )}
             value={selectedBusinessId}
-            onChange={(newValue) => setBusinessId(newValue)}
+            onChange={(newValue) =>
+              updateState({
+                selectedBusinessId: newValue,
+              })
+            }
             width="320px"
             placeholder="Business Field"
           />
@@ -356,7 +424,11 @@ function OnboardingScreen({ onComplete }) {
                 field.id !== selectedBusinessId
             )}
             value={selectedDomainId}
-            onChange={(newValue) => setDomainId(newValue)}
+            onChange={(newValue) =>
+              updateState({
+                selectedDomainId: newValue,
+              })
+            }
             width="320px"
             placeholder="Domain Field"
           />
@@ -380,7 +452,14 @@ function OnboardingScreen({ onComplete }) {
       )}
 
       {error && (
-        <Dialog onClose={() => setError("")} width="320px">
+        <Dialog
+          onClose={() =>
+            updateState({
+              error: "",
+            })
+          }
+          width="320px"
+        >
           <Text style={{ color: "red" }}>{error}</Text>
         </Dialog>
       )}
