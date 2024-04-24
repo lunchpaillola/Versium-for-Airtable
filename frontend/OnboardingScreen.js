@@ -19,7 +19,7 @@ function OnboardingScreen({ onComplete }) {
     apiKey: "",
     isLoading: false,
     error: "",
-    currentStep: "API_KEY", // Steps: 'API_KEY', 'TABLE_VIEW_SELECTION', 'INPUT_FIELD_SELECTION', 'OUTPUT_FIELD_SELECTION'
+    currentStep: 0, // Numeric steps, e.g., 0: 'API_KEY', 1: 'TABLE_SELECTION', etc.
     selectedTableId: null,
     selectedViewId: null,
     selectedLinkedinId: null,
@@ -31,6 +31,29 @@ function OnboardingScreen({ onComplete }) {
 
   const updateState = (updates) =>
     setState((prev) => ({ ...prev, ...updates }));
+
+  /* // I'm reallygetting stuck on this so i'm going to leave it be for now and just right a seciton later
+  useEffect(() => {
+    // Fetch the currentStep from global config and update the local state
+    const fetchCurrentStep = async () => {
+      let Step = await globalConfig.get("CurrentStep");
+      console.log("currentStep", Step);
+      if (Step !== null) {
+        updateState({ currentStep: Step });
+        console.log("Step:", Step);
+        console.log("currentStep:", state);
+      }
+    };
+    fetchCurrentStep();
+  }, [state.currentStep]);   
+  */
+
+  // Function to navigate to the next or previous step
+  const navigateSteps = async (stepChange) => {
+    const newStep = state.currentStep + stepChange;
+    await globalConfig.setAsync("CurrentStep", newStep); // Update CurrentStep in global config
+    updateState({ currentStep: newStep });
+  };
 
   const {
     apiKey,
@@ -105,8 +128,8 @@ function OnboardingScreen({ onComplete }) {
       }
 
       // If the code reaches here, assume the API key is valid
-      updateState({ currentStep: "TABLE_SELECTION" });
       await globalConfig.setAsync("API Key", { apiKey });
+      await navigateSteps(1);
       return true; // API key is valid
     } catch (err) {
       console.error("Error validating API key:", err);
@@ -118,19 +141,17 @@ function OnboardingScreen({ onComplete }) {
     updateState({ isLoading: true });
 
     switch (currentStep) {
-      case "API_KEY":
+      case 0:
         break;
 
-      case "TABLE_SELECTION":
+      case 1:
         if (!selectedTableId) {
           updateState({ error: "Please select a table.", isLoading: false });
           return;
         }
         try {
           await globalConfig.setAsync("Table", { selectedTableId });
-          updateState({
-            currentStep: "VIEW_SELECTION",
-          });
+          await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
           updateState({
@@ -140,7 +161,7 @@ function OnboardingScreen({ onComplete }) {
         }
         break;
 
-      case "VIEW_SELECTION":
+      case 2:
         if (!selectedViewId) {
           updateState({
             error: "Please select a view.",
@@ -150,9 +171,7 @@ function OnboardingScreen({ onComplete }) {
         }
         try {
           await globalConfig.setAsync("View", { selectedViewId });
-          updateState({
-            currentStep: "INPUT_FIELD_MAPPING",
-          });
+          await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
           updateState({
@@ -162,7 +181,7 @@ function OnboardingScreen({ onComplete }) {
         }
         break;
 
-      case "INPUT_FIELD_MAPPING":
+      case 3:
         if (!selectedLinkedinId) {
           updateState({
             error: "Please select a field to provide LinkedIn.",
@@ -174,9 +193,7 @@ function OnboardingScreen({ onComplete }) {
           await globalConfig.setAsync("LinkedIn", {
             linkedin: selectedLinkedinId,
           });
-          updateState({
-            currentStep: "OUTPUT_FIELD_MAPPING",
-          });
+          await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
           updateState({
@@ -186,7 +203,7 @@ function OnboardingScreen({ onComplete }) {
         }
         break;
 
-      case "OUTPUT_FIELD_MAPPING":
+      case 4:
         // You should validate field selections here as well, similar to the API key validation
         if (
           !selectedEmailId ||
@@ -234,7 +251,7 @@ function OnboardingScreen({ onComplete }) {
 
   return (
     <Box display="flex" flexDirection="column" padding={3}>
-      {currentStep === "API_KEY" && (
+      {currentStep === 0 && (
         <>
           {/* API Key Input Step */}
           <h1
@@ -270,7 +287,7 @@ function OnboardingScreen({ onComplete }) {
         </>
       )}
 
-      {currentStep === "TABLE_SELECTION" && (
+      {currentStep === 1 && (
         <>
           {/* Table Selection Step */}
           <Text paddingBottom={3}>
@@ -285,7 +302,7 @@ function OnboardingScreen({ onComplete }) {
                 selectedViewId: null, // Reset view selection when table changes
               });
             }}
-            width="320px"
+            width="100%"
           />
           <Button
             onClick={handleComplete}
@@ -298,7 +315,7 @@ function OnboardingScreen({ onComplete }) {
         </>
       )}
 
-      {currentStep === "VIEW_SELECTION" && selectedTableId && (
+      {currentStep === 2 && selectedTableId && (
         <>
           {/* View Selection Step */}
           <Text paddingBottom={3}>Select the view:</Text>
@@ -310,7 +327,7 @@ function OnboardingScreen({ onComplete }) {
                 selectedViewId: newValue,
               })
             }
-            width="320px"
+            width="100%"
           />
           <Button
             onClick={handleComplete}
@@ -323,7 +340,7 @@ function OnboardingScreen({ onComplete }) {
         </>
       )}
 
-      {currentStep === "INPUT_FIELD_MAPPING" && selectedTableId && (
+      {currentStep === 3 && selectedTableId && (
         <>
           {/* View Selection Step */}
           <Text paddingBottom={3}>
@@ -338,7 +355,7 @@ function OnboardingScreen({ onComplete }) {
                 selectedLinkedinId: newValue,
               })
             }
-            width="320px"
+            width="100%"
             placeholder="LinkedIn ID Field"
           />
           <Button
@@ -352,12 +369,15 @@ function OnboardingScreen({ onComplete }) {
         </>
       )}
 
-      {currentStep === "OUTPUT_FIELD_MAPPING" && selectedTableId && (
+      {currentStep === 4 && selectedTableId && (
         <>
           {/* Field Mapping Step */}
           <Text paddingBottom={3}>Map Output fields:</Text>
 
           {/* Email Field Mapping */}
+          <Text paddingTop={3} paddingBottom={1}>
+            Email field
+          </Text>
           <Select
             options={fields.filter(
               (field) =>
@@ -372,11 +392,14 @@ function OnboardingScreen({ onComplete }) {
                 selectedEmailId: newValue,
               })
             }
-            width="320px"
+            width="100%"
             placeholder="Email Field"
           />
 
           {/* Title Field Mapping */}
+          <Text paddingTop={3} paddingBottom={1}>
+            Title field
+          </Text>
           <Select
             options={fields.filter(
               (field) =>
@@ -391,11 +414,14 @@ function OnboardingScreen({ onComplete }) {
                 selectedTitleId: newValue,
               })
             }
-            width="320px"
+            width="100%"
             placeholder="Title Field"
           />
 
           {/* Business Field Mapping */}
+          <Text paddingTop={3} paddingBottom={1}>
+            Business field
+          </Text>
           <Select
             options={fields.filter(
               (field) =>
@@ -410,11 +436,14 @@ function OnboardingScreen({ onComplete }) {
                 selectedBusinessId: newValue,
               })
             }
-            width="320px"
+            width="100%"
             placeholder="Business Field"
           />
 
           {/* Domain Field Mapping */}
+          <Text paddingTop={3} paddingBottom={1}>
+            Domain field
+          </Text>
           <Select
             options={fields.filter(
               (field) =>
@@ -429,7 +458,7 @@ function OnboardingScreen({ onComplete }) {
                 selectedDomainId: newValue,
               })
             }
-            width="320px"
+            width="100%"
             placeholder="Domain Field"
           />
 
@@ -458,7 +487,7 @@ function OnboardingScreen({ onComplete }) {
               error: "",
             })
           }
-          width="320px"
+          width="100%"
         >
           <Text style={{ color: "red" }}>{error}</Text>
         </Dialog>
