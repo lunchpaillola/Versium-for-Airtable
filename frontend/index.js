@@ -10,15 +10,6 @@ import {
 import React, { Fragment, useState } from "react";
 import OnboardingScreen from "./OnboardingScreen";
 
-const TABLE_NAME = "Leads";
-const LINKEDIN_FIELD_NAME = "Linkedin";
-const FIRST_NAME_OUTPUT_FIELD_NAME = "First Name";
-const LAST_NAME_OUTPUT_FIELD_NAME = "Last Name";
-const EMAIL_OUTPUT_FIELD_NAME = "Email";
-const TITLE_OUTPUT_FIELD_NAME = "Title";
-const BUSINESS_OUTPUT_FIELD_NAME = "Business";
-const COMPANY_DOMAIN_FIELD_NAME = "Company Domain";
-
 // Airtable SDK limit: we can only update 50 records at a time. For more details, see
 // https://support.airtable.com/docs/managing-api-call-limits-in-airtable#:~:text=Airtable%20enforces%20a%20rate%20limit,given%20user%20or%20service%20account.
 const MAX_RECORDS_PER_UPDATE = 50;
@@ -28,25 +19,41 @@ const API_ENDPOINT = "https://api.versium.com/v2";
 function VersiumEnrichment() {
   const base = useBase();
 
-  const table = base.getTableByName(TABLE_NAME);
-  const LinkedinField = table.getFieldByName(LINKEDIN_FIELD_NAME);
-
   // load the records ready to be updated
   // we only need to load the word field - the others don't get read, only written to.
   const records = useRecords(table, { fields: [LinkedinField] });
 
   const [isUpdateInProgress, setIsUpdateInProgress] = useState(false);
   const globalConfig = useGlobalConfig();
-  const apiKey = globalConfig.get("apiKey");
+  const apiKey = globalConfig.get("API Key");
+  const tableId = globalConfig.get("Table");
+  const LinkedinFieldId = globalConfig.get("LinkedIn");
+  const currentStep = globalConfig.get("CurrentStep");
 
-  if (!apiKey) {
-    return (
-      <OnboardingScreen
-        onComplete={() => {
-          /* Logic to handle completion of onboarding */
-        }}
-      />
-    );
+  const fieldMappings = globalConfig.get("fieldMappings") || {};
+
+  const table = base.getTableByIdIfExists(tableId);
+  const LinkedinField = table.getFieldByIdIfExists(LinkedinFieldId);
+
+  // Safe access with optional chaining and default values
+  const FIRST_NAME_OUTPUT_FIELD_NAME = "First Name";
+  const LAST_NAME_OUTPUT_FIELD_NAME = "Last Name";
+  const EMAIL_OUTPUT_FIELD_NAME = fieldMappings.email || null;
+  const TITLE_OUTPUT_FIELD_NAME = fieldMappings.title || null;
+  const BUSINESS_OUTPUT_FIELD_NAME = fieldMappings.business || null;
+  const COMPANY_DOMAIN_FIELD_NAME = fieldMappings.domain || null;
+
+  if (
+    !apiKey ||
+    !table ||
+    !LinkedinField ||
+    !EMAIL_OUTPUT_FIELD_NAME ||
+    !TITLE_OUTPUT_FIELD_NAME ||
+    !BUSINESS_OUTPUT_FIELD_NAME ||
+    !COMPANY_DOMAIN_FIELD_NAME ||
+    currentStep !== 5
+  ) {
+    return <OnboardingScreen />;
   }
 
   const permissionCheck = table.checkPermissionsForUpdateRecord(undefined, {
@@ -64,10 +71,21 @@ function VersiumEnrichment() {
       table,
       LinkedinField,
       records,
-      apiKey
+      apiKey,
+      FIRST_NAME_OUTPUT_FIELD_NAME,
+      LAST_NAME_OUTPUT_FIELD_NAME,
+      EMAIL_OUTPUT_FIELD_NAME,
+      TITLE_OUTPUT_FIELD_NAME,
+      BUSINESS_OUTPUT_FIELD_NAME,
+      COMPANY_DOMAIN_FIELD_NAME
     );
     await updateRecordsInBatchesAsync(table, recordUpdates);
     setIsUpdateInProgress(false);
+  }
+
+  async function onReconfigureClick() {
+    await globalConfig.setAsync("CurrentStep", 0);
+    return <OnboardingScreen />;
   }
 
   return (
@@ -85,10 +103,10 @@ function VersiumEnrichment() {
       padding={3} // Add some padding around the content
     >
       <h2 style={{ textAlign: "center", marginBottom: "16px" }}>
-        🌟Data Enrichment
+        🌟 Table Enrichment
       </h2>
       <p style={{ textAlign: "center", marginBottom: "40px", maxWidth: "80%" }}>
-        Enrich your leads with business information, insights, emails and more.
+        Enrich your Airtable records with business information, insights, emails and more. All powered by Versium's API.
       </p>
       {isUpdateInProgress ? (
         <Loader />
@@ -104,6 +122,20 @@ function VersiumEnrichment() {
           >
             Start enriching
           </Button>
+          <Button
+            variant="default"
+            size="small"
+            onClick={onReconfigureClick}
+            style={{
+              marginTop: "10px",
+              background: "transparent", // No background color
+              color: "#0070f3", // Optional: choose a color that fits your design
+              border: "none", // No border
+              boxShadow: "none", // No shadow
+            }}
+          >
+            Reconfigure table
+          </Button>
           {!permissionCheck.hasPermission && (
             <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
               {permissionCheck.reasonDisplayString}
@@ -115,7 +147,17 @@ function VersiumEnrichment() {
   );
 }
 
-async function getEnrichment(table, apiKey, LinkedinField, records) {
+async function getEnrichment(
+  apiKey,
+  LinkedinField,
+  records,
+  FIRST_NAME_OUTPUT_FIELD_NAME,
+  LAST_NAME_OUTPUT_FIELD_NAME,
+  EMAIL_OUTPUT_FIELD_NAME,
+  TITLE_OUTPUT_FIELD_NAME,
+  BUSINESS_OUTPUT_FIELD_NAME,
+  COMPANY_DOMAIN_FIELD_NAME
+) {
   const recordUpdates = [];
   for (const record of records) {
     // For each record, we take the email address and make an API request to Versium:

@@ -11,7 +11,7 @@ import {
 } from "@airtable/blocks/ui";
 import React, { useState } from "react";
 
-function OnboardingScreen({ onComplete }) {
+function OnboardingScreen() {
   const base = useBase();
   const globalConfig = useGlobalConfig();
 
@@ -31,22 +31,6 @@ function OnboardingScreen({ onComplete }) {
 
   const updateState = (updates) =>
     setState((prev) => ({ ...prev, ...updates }));
-
-  /* // I'm reallygetting stuck on this so i'm going to leave it be for now and just right a seciton later
-  useEffect(() => {
-    // Fetch the currentStep from global config and update the local state
-    const fetchCurrentStep = async () => {
-      let Step = await globalConfig.get("CurrentStep");
-      console.log("currentStep", Step);
-      if (Step !== null) {
-        updateState({ currentStep: Step });
-        console.log("Step:", Step);
-        console.log("currentStep:", state);
-      }
-    };
-    fetchCurrentStep();
-  }, [state.currentStep]);   
-  */
 
   // Function to navigate to the next or previous step
   const navigateSteps = async (stepChange) => {
@@ -224,7 +208,7 @@ function OnboardingScreen({ onComplete }) {
             business: selectedBusinessId,
             domain: selectedDomainId,
           });
-          onComplete();
+          await navigateSteps(1);
         } catch (error) {
           console.error("Error saving onboarding configuration:", error);
           updateState({
