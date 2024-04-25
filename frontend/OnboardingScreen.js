@@ -128,7 +128,7 @@ function OnboardingScreen({ onComplete }) {
       }
 
       // If the code reaches here, assume the API key is valid
-      await globalConfig.setAsync("API Key", { apiKey });
+      await globalConfig.setAsync("API Key", apiKey);
       await navigateSteps(1);
       return true; // API key is valid
     } catch (err) {
@@ -150,7 +150,7 @@ function OnboardingScreen({ onComplete }) {
           return;
         }
         try {
-          await globalConfig.setAsync("Table", { selectedTableId });
+          await globalConfig.setAsync("Table", selectedTableId);
           await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
@@ -170,7 +170,7 @@ function OnboardingScreen({ onComplete }) {
           return;
         }
         try {
-          await globalConfig.setAsync("View", { selectedViewId });
+          await globalConfig.setAsync("View", selectedViewId);
           await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
@@ -190,9 +190,7 @@ function OnboardingScreen({ onComplete }) {
           return;
         }
         try {
-          await globalConfig.setAsync("LinkedIn", {
-            linkedin: selectedLinkedinId,
-          });
+          await globalConfig.setAsync("LinkedIn", selectedLinkedinId);
           await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
@@ -221,12 +219,10 @@ function OnboardingScreen({ onComplete }) {
         // Finalize setup and save configurations
         try {
           await globalConfig.setAsync("fieldMappings", {
-            fieldMappings: {
-              email: selectedEmailId,
-              title: selectedTitleId,
-              business: selectedBusinessId,
-              domain: selectedDomainId,
-            },
+            email: selectedEmailId,
+            title: selectedTitleId,
+            business: selectedBusinessId,
+            domain: selectedDomainId,
           });
           onComplete();
         } catch (error) {
