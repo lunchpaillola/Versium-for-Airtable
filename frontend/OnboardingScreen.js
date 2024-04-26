@@ -80,6 +80,7 @@ function OnboardingScreen() {
    * @return {Promise<boolean>} - Returns `true` if the API key is valid, otherwise `false`.
    */
   const validateApiKey = async (apiKey) => {
+    updateState({ isLoading: true });
     const testUrl = "https://api.versium.com/v2/contact";
     console.log("Validating apiKey:", apiKey);
 
@@ -114,6 +115,7 @@ function OnboardingScreen() {
       // If the code reaches here, assume the API key is valid
       await globalConfig.setAsync("API Key", apiKey);
       await navigateSteps(1);
+      updateState({ isLoading: false });
       return true; // API key is valid
     } catch (err) {
       console.error("Error validating API key:", err);
