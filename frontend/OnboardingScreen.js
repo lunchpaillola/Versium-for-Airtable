@@ -8,6 +8,7 @@ import {
   Loader,
   Text,
   Dialog,
+  ProgressBar,
   useGlobalConfig,
 } from "@airtable/blocks/ui";
 import React, { useState } from "react";
@@ -130,11 +131,6 @@ function OnboardingScreen() {
         break;
 
       case 1:
-        // Validate table selection and update global configuration
-        if (!selectedTable) {
-          updateState({ error: "Please select a table.", isLoading: false });
-          return;
-        }
         try {
           await globalConfig.setAsync("Table", selectedTable.id);
           await navigateSteps(1);
@@ -148,15 +144,6 @@ function OnboardingScreen() {
         break;
 
       case 2:
-        // Validate view selection and update global configuration
-        // Additional steps for views, LinkedIn field, etc.
-        if (!selectedView) {
-          updateState({
-            error: "Please select a view.",
-            isLoading: false,
-          });
-          return;
-        }
         try {
           await globalConfig.setAsync("View", selectedView.id);
           await navigateSteps(1);
@@ -170,13 +157,6 @@ function OnboardingScreen() {
         break;
 
       case 3:
-        if (!selectedLinkedin) {
-          updateState({
-            error: "Please select a field to provide LinkedIn.",
-            isLoading: false,
-          });
-          return;
-        }
         try {
           await globalConfig.setAsync("LinkedIn", selectedLinkedin.id);
           await navigateSteps(1);
@@ -190,20 +170,6 @@ function OnboardingScreen() {
         break;
 
       case 4:
-        if (
-          !selectedEmail ||
-          !selectedTitle ||
-          !selectedBusiness ||
-          !selectedDomain
-        ) {
-          updateState({
-            error: "Please complete all field mappings.",
-            isLoading: false,
-          });
-          return;
-        }
-
-        // Finalize setup and save configurations
         try {
           await globalConfig.setAsync("fieldMappings", {
             firstName: selectedFirstName.id,
@@ -249,11 +215,6 @@ function OnboardingScreen() {
             Versium for airtable
           </h1>
           <Text style={{ paddingBottom: "12px" }}>
-            Transform your marketing data with Versium for Airtable, a suite of
-            powerful data enrichment and cleansing tools seamlessly integrated
-            into your Airtable workflow.
-          </Text>
-          <Text style={{ paddingBottom: "12px" }}>
             Enter your API key then complete configuring your fields to get
             started:
           </Text>
@@ -272,10 +233,11 @@ function OnboardingScreen() {
             onClick={() => validateApiKey(apiKey)}
             disabled={!apiKey}
             marginTop={3}
-            style={{ backgroundColor: "#007bff", color: "#ffffff" }}
+            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
           >
             Next: Select Table
           </Button>
+          <ProgressBar progress={0} barColor="#6C57C0" />
         </>
       )}
 
@@ -299,10 +261,11 @@ function OnboardingScreen() {
             onClick={handleComplete}
             marginTop={3}
             disabled={!selectedTable}
-            style={{ backgroundColor: "#007bff", color: "#ffffff" }}
+            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
           >
             Next: Select View
           </Button>
+          <ProgressBar progress={0.2} barColor="#6C57C0" />
         </>
       )}
 
@@ -325,10 +288,11 @@ function OnboardingScreen() {
             onClick={handleComplete}
             disabled={!selectedView}
             marginTop={3}
-            style={{ backgroundColor: "#007bff", color: "#ffffff" }}
+            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
           >
             Next: Map Input Field
           </Button>
+          <ProgressBar progress={0.4} barColor="#6C57C0" />
         </>
       )}
 
@@ -354,10 +318,11 @@ function OnboardingScreen() {
             onClick={handleComplete}
             disabled={!selectedView}
             marginTop={3}
-            style={{ backgroundColor: "#007bff", color: "#ffffff" }}
+            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
           >
             Next: Map Output Fields
           </Button>
+          <ProgressBar progress={0.6} barColor="#6C57C0" />
         </>
       )}
 
@@ -473,10 +438,11 @@ function OnboardingScreen() {
               !selectedLastName
             }
             marginTop={3}
-            style={{ backgroundColor: "#007bff", color: "#ffffff" }}
+            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
           >
             Complete Setup
           </Button>
+          <ProgressBar progress={0.8} barColor="#6C57C0" />
         </>
       )}
 
