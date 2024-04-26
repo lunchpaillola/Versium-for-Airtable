@@ -2,17 +2,17 @@ import {
   Box,
   Button,
   Input,
-  Select,
+  TablePicker,
+  ViewPicker,
+  FieldPicker,
   Loader,
   Text,
   Dialog,
-  useBase,
   useGlobalConfig,
 } from "@airtable/blocks/ui";
 import React, { useState } from "react";
 
 function OnboardingScreen() {
-  const base = useBase();
   const globalConfig = useGlobalConfig();
 
   const [state, setState] = useState({
@@ -20,15 +20,15 @@ function OnboardingScreen() {
     isLoading: false,
     error: "",
     currentStep: 0,
-    selectedTableId: null,
-    selectedViewId: null,
-    selectedLinkedinId: null,
-    selectedEmailId: null,
-    selectedTitleId: null,
-    selectedBusinessId: null,
-    selectedDomainId: null,
-    selectedFirstNameId: null,
-    selectedLastNameId: null,
+    selectedTable: null,
+    selectedView: null,
+    selectedLinkedin: null,
+    selectedEmail: null,
+    selectedTitle: null,
+    selectedBusiness: null,
+    selectedDomain: null,
+    selectedFirstName: null,
+    selectedLastName: null,
   });
 
   const updateState = (updates) =>
@@ -52,35 +52,16 @@ function OnboardingScreen() {
     isLoading,
     error,
     currentStep,
-    selectedTableId,
-    selectedViewId,
-    selectedLinkedinId,
-    selectedEmailId,
-    selectedTitleId,
-    selectedBusinessId,
-    selectedDomainId,
-    selectedFirstNameId,
-    selectedLastNameId,
+    selectedTable,
+    selectedView,
+    selectedLinkedin,
+    selectedEmail,
+    selectedTitle,
+    selectedBusiness,
+    selectedDomain,
+    selectedFirstName,
+    selectedLastName,
   } = state;
-
-  const tables = base.tables.map((table) => ({
-    value: table.id,
-    label: table.name,
-  }));
-
-  const views = selectedTableId
-    ? base.getTableById(selectedTableId).views.map((view) => ({
-        value: view.id,
-        label: view.name,
-      }))
-    : [];
-
-  const fields = selectedTableId
-    ? base.getTableById(selectedTableId).fields.map((field) => ({
-        value: field.id,
-        label: field.name,
-      }))
-    : [];
 
   /**
    * Validates the provided API key by making a request to the API.
@@ -150,12 +131,12 @@ function OnboardingScreen() {
 
       case 1:
         // Validate table selection and update global configuration
-        if (!selectedTableId) {
+        if (!selectedTable) {
           updateState({ error: "Please select a table.", isLoading: false });
           return;
         }
         try {
-          await globalConfig.setAsync("Table", selectedTableId);
+          await globalConfig.setAsync("Table", selectedTable.id);
           await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
@@ -169,7 +150,7 @@ function OnboardingScreen() {
       case 2:
         // Validate view selection and update global configuration
         // Additional steps for views, LinkedIn field, etc.
-        if (!selectedViewId) {
+        if (!selectedView) {
           updateState({
             error: "Please select a view.",
             isLoading: false,
@@ -177,7 +158,7 @@ function OnboardingScreen() {
           return;
         }
         try {
-          await globalConfig.setAsync("View", selectedViewId);
+          await globalConfig.setAsync("View", selectedView.id);
           await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
@@ -189,7 +170,7 @@ function OnboardingScreen() {
         break;
 
       case 3:
-        if (!selectedLinkedinId) {
+        if (!selectedLinkedin) {
           updateState({
             error: "Please select a field to provide LinkedIn.",
             isLoading: false,
@@ -197,7 +178,7 @@ function OnboardingScreen() {
           return;
         }
         try {
-          await globalConfig.setAsync("LinkedIn", selectedLinkedinId);
+          await globalConfig.setAsync("LinkedIn", selectedLinkedin.id);
           await navigateSteps(1);
         } catch (error) {
           console.error("Error updating globalConfig:", error);
@@ -209,12 +190,11 @@ function OnboardingScreen() {
         break;
 
       case 4:
-        // You should validate field selections here as well, similar to the API key validation
         if (
-          !selectedEmailId ||
-          !selectedTitleId ||
-          !selectedBusinessId ||
-          !selectedDomainId
+          !selectedEmail ||
+          !selectedTitle ||
+          !selectedBusiness ||
+          !selectedDomain
         ) {
           updateState({
             error: "Please complete all field mappings.",
@@ -226,10 +206,12 @@ function OnboardingScreen() {
         // Finalize setup and save configurations
         try {
           await globalConfig.setAsync("fieldMappings", {
-            email: selectedEmailId,
-            title: selectedTitleId,
-            business: selectedBusinessId,
-            domain: selectedDomainId,
+            firstName: selectedFirstName.id,
+            lastName: selectedLastName.id,
+            email: selectedEmail.id,
+            title: selectedTitle.id,
+            business: selectedBusiness.id,
+            domain: selectedDomain.id,
           });
           await navigateSteps(1);
         } catch (error) {
@@ -283,6 +265,7 @@ function OnboardingScreen() {
               })
             }
             placeholder="Enter your API Key"
+            required={true}
             style={{ marginBottom: "24px" }}
           />
           <Button
@@ -302,21 +285,20 @@ function OnboardingScreen() {
           <Text paddingBottom={3}>
             Select the table with the records you want to enrich:
           </Text>
-          <Select
-            options={tables}
-            value={selectedTableId}
+          <TablePicker
+            table={selectedTable}
             onChange={(newValue) => {
               updateState({
-                selectedTableId: newValue,
-                selectedViewId: null, // Reset view selection when table changes
+                selectedTable: newValue,
               });
             }}
             width="100%"
+            shouldAllowPickingNone={false}
           />
           <Button
             onClick={handleComplete}
-            disabled={!selectedTableId}
             marginTop={3}
+            disabled={!selectedTable}
             style={{ backgroundColor: "#007bff", color: "#ffffff" }}
           >
             Next: Select View
@@ -324,23 +306,24 @@ function OnboardingScreen() {
         </>
       )}
 
-      {currentStep === 2 && selectedTableId && (
+      {currentStep === 2 && selectedTable && (
         <>
           {/* View Selection Step */}
           <Text paddingBottom={3}>Select the view:</Text>
-          <Select
-            options={views}
-            value={selectedViewId}
+          <ViewPicker
+            table={selectedTable}
+            view={selectedView}
             onChange={(newValue) =>
               updateState({
-                selectedViewId: newValue,
+                selectedView: newValue,
               })
             }
             width="100%"
+            shouldAllowPickingNone={false}
           />
           <Button
             onClick={handleComplete}
-            disabled={!selectedViewId}
+            disabled={!selectedView}
             marginTop={3}
             style={{ backgroundColor: "#007bff", color: "#ffffff" }}
           >
@@ -349,27 +332,27 @@ function OnboardingScreen() {
         </>
       )}
 
-      {currentStep === 3 && selectedTableId && (
+      {currentStep === 3 && selectedTable && (
         <>
           {/* View Selection Step */}
           <Text paddingBottom={3}>
             Select the LinkedIn url that the extension should enrich:
           </Text>
           {/* LinkedIn ID Field Mapping */}
-          <Select
-            options={fields}
-            value={selectedLinkedinId}
+          <FieldPicker
+            table={selectedTable}
+            field={selectedLinkedin}
             onChange={(newValue) =>
               updateState({
-                selectedLinkedinId: newValue,
+                selectedLinkedin: newValue,
               })
             }
             width="100%"
-            placeholder="LinkedIn ID Field"
+            shouldAllowPickingNone={false}
           />
           <Button
             onClick={handleComplete}
-            disabled={!selectedViewId}
+            disabled={!selectedView}
             marginTop={3}
             style={{ backgroundColor: "#007bff", color: "#ffffff" }}
           >
@@ -378,7 +361,7 @@ function OnboardingScreen() {
         </>
       )}
 
-      {currentStep === 4 && selectedTableId && (
+      {currentStep === 4 && selectedTable && (
         <>
           {/* Field Mapping Step */}
           <Text paddingBottom={3}>Map Output fields:</Text>
@@ -387,100 +370,108 @@ function OnboardingScreen() {
           <Text paddingTop={3} paddingBottom={1}>
             First name field
           </Text>
-          <Select
-            options={fields}
-            value={selectedFirstNameId}
+          <FieldPicker
+            table={selectedTable}
+            field={selectedFirstName}
             onChange={(newValue) =>
               updateState({
-                selectedFirstNameId: newValue,
+                selectedFirstName: newValue,
               })
             }
             width="100%"
-            placeholder="First name field"
+            shouldAllowPickingNone={false}
           />
 
           {/* Last name field mapping */}
           <Text paddingTop={3} paddingBottom={1}>
             Last name field
           </Text>
-          <Select
-            options={fields}
-            value={selectedLastNameId}
+          <FieldPicker
+            table={selectedTable}
+            field={selectedLastName}
             onChange={(newValue) =>
               updateState({
-                selectedLastNameId: newValue,
+                selectedLastName: newValue,
               })
             }
             width="100%"
-            placeholder="Last name field"
+            shouldAllowPickingNone={false}
           />
 
           {/* Email Field Mapping */}
           <Text paddingTop={3} paddingBottom={1}>
             Email field
           </Text>
-          <Select
-            options={fields}
-            value={selectedEmailId}
+          <FieldPicker
+            table={selectedTable}
+            field={selectedEmail}
             onChange={(newValue) =>
               updateState({
-                selectedEmailId: newValue,
+                selectedEmail: newValue,
               })
             }
             width="100%"
-            placeholder="Email Field"
+            shouldAllowPickingNone={false}
           />
 
           {/* Title Field Mapping */}
           <Text paddingTop={3} paddingBottom={1}>
             Title field
           </Text>
-          <Select
-            options={fields}
-            value={selectedTitleId}
+          <FieldPicker
+            table={selectedTable}
+            field={selectedTitle}
             onChange={(newValue) =>
               updateState({
-                selectedTitleId: newValue,
+                selectedTitle: newValue,
               })
             }
             width="100%"
-            placeholder="Title Field"
+            shouldAllowPickingNone={false}
           />
 
           {/* Business Field Mapping */}
           <Text paddingTop={3} paddingBottom={1}>
             Business field
           </Text>
-          <Select
-            options={fields}
-            value={selectedBusinessId}
+          <FieldPicker
+            table={selectedTable}
+            field={selectedBusiness}
             onChange={(newValue) =>
               updateState({
-                selectedBusinessId: newValue,
+                selectedBusiness: newValue,
               })
             }
             width="100%"
-            placeholder="Business Field"
+            shouldAllowPickingNone={false}
           />
 
           {/* Domain Field Mapping */}
           <Text paddingTop={3} paddingBottom={1}>
             Domain field
           </Text>
-          <Select
-            options={fields}
-            value={selectedDomainId}
+          <FieldPicker
+            table={selectedTable}
+            field={selectedDomain}
             onChange={(newValue) =>
               updateState({
-                selectedDomainId: newValue,
+                selectedDomain: newValue,
               })
             }
             width="100%"
-            placeholder="Domain Field"
+            shouldAllowPickingNone={false}
           />
 
           <Button
             onClick={handleComplete}
+            disabled={
+              !selectedDomain ||
+              !selectedEmail ||
+              !selectedTitle ||
+              !selectedBusiness ||
+              !selectedFirstName ||
+              !selectedLastName
+            }
             marginTop={3}
             style={{ backgroundColor: "#007bff", color: "#ffffff" }}
           >

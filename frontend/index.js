@@ -33,7 +33,10 @@ function VersiumEnrichment() {
   const fieldMappings = globalConfig.get("fieldMappings") || {};
 
   const table = base.getTableByIdIfExists(tableId);
-  const LinkedinField = table.getFieldByIdIfExists(LinkedinFieldId);
+  let LinkedinField;
+  if (table) {
+    LinkedinField = table.getFieldByIdIfExists(LinkedinFieldId);
+  }
 
   // Safe access with optional chaining and default values
   const FIRST_NAME_OUTPUT_FIELD_NAME = "First Name";
