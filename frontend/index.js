@@ -90,7 +90,6 @@ function VersiumEnrichment() {
 
   return (
     <Box
-      // Center the content horizontally and vertically
       position="absolute"
       top="0"
       bottom="0"
@@ -100,13 +99,15 @@ function VersiumEnrichment() {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      padding={3} // Add some padding around the content
+      padding={3}
     >
       <h2 style={{ textAlign: "center", marginBottom: "16px" }}>
-        🌟 Table Enrichment
+        🌟 Versium for Airtable
       </h2>
       <p style={{ textAlign: "center", marginBottom: "40px", maxWidth: "80%" }}>
-        Enrich your Airtable records with business information, insights, emails and more. All powered by Versium's API.
+        Transform your marketing data with Versium for Airtable, a suite of
+        powerful data enrichment and cleansing tools seamlessly integrated into
+        your Airtable workflow.
       </p>
       {isUpdateInProgress ? (
         <Loader />
@@ -134,7 +135,7 @@ function VersiumEnrichment() {
               boxShadow: "none", // No shadow
             }}
           >
-            Reconfigure table
+            Reconfigure fields
           </Button>
           {!permissionCheck.hasPermission && (
             <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
@@ -169,7 +170,7 @@ async function getEnrichment(
     const response = await fetch(requestUrl, {
       method: "GET", // The Versium API requires a GET request.
       headers: {
-        "X-Versium-Api-Key": apiKey, // Make sure to replace '<Your Versium API Key Here>' with your actual API key.
+        "X-Versium-Api-Key": apiKey,
       },
     });
 

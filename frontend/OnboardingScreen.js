@@ -19,7 +19,7 @@ function OnboardingScreen() {
     apiKey: "",
     isLoading: false,
     error: "",
-    currentStep: 0, // Numeric steps, e.g., 0: 'API_KEY', 1: 'TABLE_SELECTION', etc.
+    currentStep: 0,
     selectedTableId: null,
     selectedViewId: null,
     selectedLinkedinId: null,
@@ -27,12 +27,20 @@ function OnboardingScreen() {
     selectedTitleId: null,
     selectedBusinessId: null,
     selectedDomainId: null,
+    selectedFirstNameId: null,
+    selectedLastNameId: null,
   });
 
   const updateState = (updates) =>
     setState((prev) => ({ ...prev, ...updates }));
 
-  // Function to navigate to the next or previous step
+  /**
+   * Navigates to the specified step by changing the current step in both the local state and global configuration.
+   *
+   * @param {number} stepChange - The increment or decrement to apply to the current step.
+   * @returns {Promise<void>} - Resolves when the step change is successfully saved to the global configuration.
+   */
+
   const navigateSteps = async (stepChange) => {
     const newStep = state.currentStep + stepChange;
     await globalConfig.setAsync("CurrentStep", newStep); // Update CurrentStep in global config
@@ -51,6 +59,8 @@ function OnboardingScreen() {
     selectedTitleId,
     selectedBusinessId,
     selectedDomainId,
+    selectedFirstNameId,
+    selectedLastNameId,
   } = state;
 
   const tables = base.tables.map((table) => ({
@@ -123,6 +133,14 @@ function OnboardingScreen() {
     }
   };
 
+  /**
+   * Handles the completion of the current onboarding step and progresses to the next step.
+   * It performs validation checks and updates global configuration based on the current step.
+   * Handles different cases like table selection, view selection, LinkedIn field selection, and field mappings.
+   *
+   * @returns {Promise<void>} - Executes asynchronous operations based on the current onboarding step.
+   */
+
   const handleComplete = async () => {
     updateState({ isLoading: true });
 
@@ -131,6 +149,7 @@ function OnboardingScreen() {
         break;
 
       case 1:
+        // Validate table selection and update global configuration
         if (!selectedTableId) {
           updateState({ error: "Please select a table.", isLoading: false });
           return;
@@ -148,6 +167,8 @@ function OnboardingScreen() {
         break;
 
       case 2:
+        // Validate view selection and update global configuration
+        // Additional steps for views, LinkedIn field, etc.
         if (!selectedViewId) {
           updateState({
             error: "Please select a view.",
@@ -243,10 +264,16 @@ function OnboardingScreen() {
               marginBottom: "16px",
             }}
           >
-            Versium Extension
+            Versium for airtable
           </h1>
           <Text style={{ paddingBottom: "12px" }}>
-            Enter your API key to get started:
+            Transform your marketing data with Versium for Airtable, a suite of
+            powerful data enrichment and cleansing tools seamlessly integrated
+            into your Airtable workflow.
+          </Text>
+          <Text style={{ paddingBottom: "12px" }}>
+            Enter your API key then complete configuring your fields to get
+            started:
           </Text>
           <Input
             value={apiKey}
@@ -356,18 +383,44 @@ function OnboardingScreen() {
           {/* Field Mapping Step */}
           <Text paddingBottom={3}>Map Output fields:</Text>
 
+          {/* First name field mapping */}
+          <Text paddingTop={3} paddingBottom={1}>
+            First name field
+          </Text>
+          <Select
+            options={fields}
+            value={selectedFirstNameId}
+            onChange={(newValue) =>
+              updateState({
+                selectedFirstNameId: newValue,
+              })
+            }
+            width="100%"
+            placeholder="First name field"
+          />
+
+          {/* Last name field mapping */}
+          <Text paddingTop={3} paddingBottom={1}>
+            Last name field
+          </Text>
+          <Select
+            options={fields}
+            value={selectedLastNameId}
+            onChange={(newValue) =>
+              updateState({
+                selectedLastNameId: newValue,
+              })
+            }
+            width="100%"
+            placeholder="Last name field"
+          />
+
           {/* Email Field Mapping */}
           <Text paddingTop={3} paddingBottom={1}>
             Email field
           </Text>
           <Select
-            options={fields.filter(
-              (field) =>
-                field.id !== selectedLinkedinId &&
-                field.id !== selectedTitleId &&
-                field.id !== selectedBusinessId &&
-                field.id !== selectedDomainId
-            )}
+            options={fields}
             value={selectedEmailId}
             onChange={(newValue) =>
               updateState({
@@ -383,13 +436,7 @@ function OnboardingScreen() {
             Title field
           </Text>
           <Select
-            options={fields.filter(
-              (field) =>
-                field.id !== selectedLinkedinId &&
-                field.id !== selectedEmailId &&
-                field.id !== selectedBusinessId &&
-                field.id !== selectedDomainId
-            )}
+            options={fields}
             value={selectedTitleId}
             onChange={(newValue) =>
               updateState({
@@ -405,13 +452,7 @@ function OnboardingScreen() {
             Business field
           </Text>
           <Select
-            options={fields.filter(
-              (field) =>
-                field.id !== selectedLinkedinId &&
-                field.id !== selectedEmailId &&
-                field.id !== selectedTitleId &&
-                field.id !== selectedDomainId
-            )}
+            options={fields}
             value={selectedBusinessId}
             onChange={(newValue) =>
               updateState({
@@ -427,13 +468,7 @@ function OnboardingScreen() {
             Domain field
           </Text>
           <Select
-            options={fields.filter(
-              (field) =>
-                field.id !== selectedLinkedinId &&
-                field.id !== selectedEmailId &&
-                field.id !== selectedTitleId &&
-                field.id !== selectedBusinessId
-            )}
+            options={fields}
             value={selectedDomainId}
             onChange={(newValue) =>
               updateState({
@@ -446,14 +481,6 @@ function OnboardingScreen() {
 
           <Button
             onClick={handleComplete}
-            disabled={
-              !(
-                selectedEmailId &&
-                selectedTitleId &&
-                selectedDomainId &&
-                selectedBusinessId
-              )
-            }
             marginTop={3}
             style={{ backgroundColor: "#007bff", color: "#ffffff" }}
           >
