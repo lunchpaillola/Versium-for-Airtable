@@ -7,8 +7,8 @@ import {
   FieldPicker,
   Loader,
   Text,
+  Label,
   Dialog,
-  ProgressBar,
   useGlobalConfig,
 } from "@airtable/blocks/ui";
 import React, { useState } from "react";
@@ -68,10 +68,9 @@ function OnboardingScreen() {
    * Validates the provided API key by making a request to the API.
    * If the API key is valid, updates the UI and global configuration.
    *
-   * @param {string} apiKey - The API key to validate.
    * @return {Promise<boolean>} - Returns `true` if the API key is valid, otherwise `false`.
    */
-  const validateApiKey = async (apiKey) => {
+  const validateApiKey = async () => {
     updateState({ isLoading: true });
     const testUrl = "https://api.versium.com/v2/contact";
     console.log("Validating apiKey:", apiKey);
@@ -200,6 +199,33 @@ function OnboardingScreen() {
     });
   };
 
+  //UI components
+
+  const StepIndicator = ({ stepText }) => (
+    <Text
+      size="small"
+      style={{
+        fontWeight: "bold",
+        marginBottom: "24px",
+        marginTop: "12px",
+        textAlign: "center",
+      }}
+    >
+      {stepText}
+    </Text>
+  );
+
+  const PrimaryButton = ({ children, onClick, disabled }) => (
+    <Button
+      onClick={onClick}
+      disabled={disabled}
+      marginTop={3}
+      style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
+    >
+      {children}
+    </Button>
+  );
+
   return (
     <Box display="flex" flexDirection="column" padding={3}>
       {currentStep === 0 && (
@@ -214,10 +240,10 @@ function OnboardingScreen() {
           >
             Versium for airtable
           </h1>
-          <Text style={{ paddingBottom: "12px" }}>
+          <Label>
             Enter your API key then complete configuring your fields to get
             started:
-          </Text>
+          </Label>
           <Input
             value={apiKey}
             onChange={(e) =>
@@ -225,28 +251,21 @@ function OnboardingScreen() {
                 apiKey: e.target.value,
               })
             }
-            placeholder="Enter your API Key"
+            placeholder="Versium API Key"
             required={true}
-            style={{ marginBottom: "24px" }}
+            style={{ marginBottom: 3 }}
           />
-          <Button
-            onClick={() => validateApiKey(apiKey)}
-            disabled={!apiKey}
-            marginTop={3}
-            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
-          >
+          <PrimaryButton onClick={validateApiKey} disabled={!apiKey}>
             Next: Select Table
-          </Button>
-          <ProgressBar progress={0} barColor="#6C57C0" />
+          </PrimaryButton>
+          <StepIndicator stepText="Step 1 of 5" />
         </>
       )}
 
       {currentStep === 1 && (
         <>
           {/* Table Selection Step */}
-          <Text paddingBottom={3}>
-            Select the table with the records you want to enrich:
-          </Text>
+          <Label>Select the table with the records you want to enrich:</Label>
           <TablePicker
             table={selectedTable}
             onChange={(newValue) => {
@@ -257,22 +276,17 @@ function OnboardingScreen() {
             width="100%"
             shouldAllowPickingNone={false}
           />
-          <Button
-            onClick={handleComplete}
-            marginTop={3}
-            disabled={!selectedTable}
-            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
-          >
+          <PrimaryButton onClick={handleComplete} disabled={!selectedTable}>
             Next: Select View
-          </Button>
-          <ProgressBar progress={0.2} barColor="#6C57C0" />
+          </PrimaryButton>
+          <StepIndicator stepText="Step 2 of 5" />
         </>
       )}
 
       {currentStep === 2 && selectedTable && (
         <>
           {/* View Selection Step */}
-          <Text paddingBottom={3}>Select the view:</Text>
+          <Label>Select the view:</Label>
           <ViewPicker
             table={selectedTable}
             view={selectedView}
@@ -284,24 +298,19 @@ function OnboardingScreen() {
             width="100%"
             shouldAllowPickingNone={false}
           />
-          <Button
-            onClick={handleComplete}
-            disabled={!selectedView}
-            marginTop={3}
-            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
-          >
+          <PrimaryButton onClick={handleComplete} disabled={!selectedView}>
             Next: Map Input Field
-          </Button>
-          <ProgressBar progress={0.4} barColor="#6C57C0" />
+          </PrimaryButton>
+          <StepIndicator stepText="Step 3 of 5" />
         </>
       )}
 
       {currentStep === 3 && selectedTable && (
         <>
           {/* View Selection Step */}
-          <Text paddingBottom={3}>
+          <Label>
             Select the LinkedIn url that the extension should enrich:
-          </Text>
+          </Label>
           {/* LinkedIn ID Field Mapping */}
           <FieldPicker
             table={selectedTable}
@@ -322,7 +331,7 @@ function OnboardingScreen() {
           >
             Next: Map Output Fields
           </Button>
-          <ProgressBar progress={0.6} barColor="#6C57C0" />
+          <StepIndicator stepText="Step 4 of 5" />
         </>
       )}
 
@@ -332,9 +341,7 @@ function OnboardingScreen() {
           <Text paddingBottom={3}>Map Output fields:</Text>
 
           {/* First name field mapping */}
-          <Text paddingTop={3} paddingBottom={1}>
-            First name field
-          </Text>
+          <Label>First name field</Label>
           <FieldPicker
             table={selectedTable}
             field={selectedFirstName}
@@ -348,9 +355,7 @@ function OnboardingScreen() {
           />
 
           {/* Last name field mapping */}
-          <Text paddingTop={3} paddingBottom={1}>
-            Last name field
-          </Text>
+          <Label>Last name field</Label>
           <FieldPicker
             table={selectedTable}
             field={selectedLastName}
@@ -364,9 +369,7 @@ function OnboardingScreen() {
           />
 
           {/* Email Field Mapping */}
-          <Text paddingTop={3} paddingBottom={1}>
-            Email field
-          </Text>
+          <Label>Email field</Label>
           <FieldPicker
             table={selectedTable}
             field={selectedEmail}
@@ -380,9 +383,7 @@ function OnboardingScreen() {
           />
 
           {/* Title Field Mapping */}
-          <Text paddingTop={3} paddingBottom={1}>
-            Title field
-          </Text>
+          <Label>Title field</Label>
           <FieldPicker
             table={selectedTable}
             field={selectedTitle}
@@ -396,9 +397,7 @@ function OnboardingScreen() {
           />
 
           {/* Business Field Mapping */}
-          <Text paddingTop={3} paddingBottom={1}>
-            Business field
-          </Text>
+          <Label>Business field</Label>
           <FieldPicker
             table={selectedTable}
             field={selectedBusiness}
@@ -427,7 +426,7 @@ function OnboardingScreen() {
             shouldAllowPickingNone={false}
           />
 
-          <Button
+          <PrimaryButton
             onClick={handleComplete}
             disabled={
               !selectedDomain ||
@@ -437,12 +436,10 @@ function OnboardingScreen() {
               !selectedFirstName ||
               !selectedLastName
             }
-            marginTop={3}
-            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
           >
             Complete Setup
-          </Button>
-          <ProgressBar progress={0.8} barColor="#6C57C0" />
+          </PrimaryButton>
+          <StepIndicator stepText="Step 5 of 5" />
         </>
       )}
 

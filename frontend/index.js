@@ -20,8 +20,6 @@ function VersiumEnrichment() {
   const base = useBase();
 
   // load the records ready to be updated
-  // we only need to load the word field - the others don't get read, only written to.
-  const records = useRecords(table, { fields: [LinkedinField] });
 
   const [isUpdateInProgress, setIsUpdateInProgress] = useState(false);
   const globalConfig = useGlobalConfig();
@@ -33,14 +31,12 @@ function VersiumEnrichment() {
   const fieldMappings = globalConfig.get("fieldMappings") || {};
 
   const table = base.getTableByIdIfExists(tableId);
-  let LinkedinField;
-  if (table) {
-    LinkedinField = table.getFieldByIdIfExists(LinkedinFieldId);
-  }
+
+  const records = useRecords(table, { fields: [LinkedinFieldId] });
 
   // Safe access with optional chaining and default values
-  const FIRST_NAME_OUTPUT_FIELD_NAME = "First Name";
-  const LAST_NAME_OUTPUT_FIELD_NAME = "Last Name";
+  const FIRST_NAME_OUTPUT_FIELD_NAME = fieldMappings.firstName || null;
+  const LAST_NAME_OUTPUT_FIELD_NAME = fieldMappings.lastName || null;
   const EMAIL_OUTPUT_FIELD_NAME = fieldMappings.email || null;
   const TITLE_OUTPUT_FIELD_NAME = fieldMappings.title || null;
   const BUSINESS_OUTPUT_FIELD_NAME = fieldMappings.business || null;
@@ -49,7 +45,7 @@ function VersiumEnrichment() {
   if (
     !apiKey ||
     !table ||
-    !LinkedinField ||
+    !LinkedinFieldId ||
     !EMAIL_OUTPUT_FIELD_NAME ||
     !TITLE_OUTPUT_FIELD_NAME ||
     !BUSINESS_OUTPUT_FIELD_NAME ||
@@ -72,7 +68,7 @@ function VersiumEnrichment() {
     setIsUpdateInProgress(true);
     const recordUpdates = await getEnrichment(
       table,
-      LinkedinField,
+      LinkedinFieldId,
       records,
       apiKey,
       FIRST_NAME_OUTPUT_FIELD_NAME,
@@ -153,7 +149,7 @@ function VersiumEnrichment() {
 
 async function getEnrichment(
   apiKey,
-  LinkedinField,
+  LinkedinFieldId,
   records,
   FIRST_NAME_OUTPUT_FIELD_NAME,
   LAST_NAME_OUTPUT_FIELD_NAME,
@@ -165,7 +161,7 @@ async function getEnrichment(
   const recordUpdates = [];
   for (const record of records) {
     // For each record, we take the email address and make an API request to Versium:
-    const linkedinUrl = record.getCellValueAsString(LinkedinField); // Ensure `emailField` is defined and corresponds to the field in your records containing the email addresses.
+    const linkedinUrl = record.getCellValueAsString(LinkedinFieldId); // Ensure `emailField` is defined and corresponds to the field in your records containing the email addresses.
     const requestUrl = `${API_ENDPOINT}/c2b?li_url=${encodeURIComponent(
       linkedinUrl
     )}`;
