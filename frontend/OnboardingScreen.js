@@ -233,17 +233,37 @@ function OnboardingScreen() {
           {/* API Key Input Step */}
           <h1
             style={{
-              textAlign: "center",
+              textAlign: "left",
               fontWeight: "bold",
               marginBottom: "16px",
             }}
           >
-            Versium for airtable
+            Enter Versium API key
           </h1>
-          <Label>
-            Enter your API key then complete configuring your fields to get
-            started:
-          </Label>
+          <Text
+            style={{
+              textAlign: "left",
+              marginBottom: "16px",
+            }}
+          >
+            To use this extension, you need a Versium API key. Sign up at{" "}
+            <a
+              href="https://app.versium.com/create-account"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Versium
+            </a>
+            , log in, and retrieve your API key from{" "}
+            <a
+              href="https://app.versium.com/account/manage-api-keys"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Manage API Keys
+            </a>{" "}
+            in your account settings.
+          </Text>
           <Input
             value={apiKey}
             onChange={(e) =>
@@ -256,7 +276,7 @@ function OnboardingScreen() {
             style={{ marginBottom: 3 }}
           />
           <PrimaryButton onClick={validateApiKey} disabled={!apiKey}>
-            Next: Select Table
+            Next: Configure Settings
           </PrimaryButton>
           <StepIndicator stepText="Step 1 of 5" />
         </>
