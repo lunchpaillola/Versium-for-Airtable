@@ -13,27 +13,57 @@ import {
   Link,
   Heading,
   Icon,
+  useBase,
 } from "@airtable/blocks/ui";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 function OnboardingScreen() {
   const globalConfig = useGlobalConfig();
+  const base = useBase();
 
-  const [state, setState] = useState({
-    apiKey: "",
-    isLoading: false,
-    error: "",
-    currentStep: 0,
-    selectedTable: null,
-    selectedView: null,
-    selectedLinkedin: null,
-    selectedEmail: null,
-    selectedTitle: null,
-    selectedBusiness: null,
-    selectedDomain: null,
-    selectedFirstName: null,
-    selectedLastName: null,
-  });
+  // Initial state setup
+  const initialState = useMemo(() => {
+    const tableId = globalConfig.get("Table");
+    const selectedTable = base.getTableIfExists(tableId);
+    return {
+      apiKey: globalConfig.get("API Key") || "",
+      isLoading: false,
+      error: "",
+      currentStep: globalConfig.get("currentStep") || 0,
+      selectedTable: selectedTable,
+      selectedView:
+        selectedTable?.getViewByIdIfExists(globalConfig.get("View")) || null,
+      selectedLinkedin:
+        selectedTable?.getFieldByIdIfExists(globalConfig.get("LinkedIn")) ||
+        null,
+      selectedEmail:
+        selectedTable?.getFieldByIdIfExists(
+          globalConfig.get("fieldMappings")?.email
+        ) || null,
+      selectedTitle:
+        selectedTable?.getFieldByIdIfExists(
+          globalConfig.get("fieldMappings")?.title
+        ) || null,
+      selectedBusiness:
+        selectedTable?.getFieldByIdIfExists(
+          globalConfig.get("fieldMappings")?.business
+        ) || null,
+      selectedDomain:
+        selectedTable?.getFieldByIdIfExists(
+          globalConfig.get("fieldMappings")?.domain
+        ) || null,
+      selectedFirstName:
+        selectedTable?.getFieldByIdIfExists(
+          globalConfig.get("fieldMappings")?.firstName
+        ) || null,
+      selectedLastName:
+        selectedTable?.getFieldByIdIfExists(
+          globalConfig.get("fieldMappings")?.lastName
+        ) || null,
+    };
+  }, [base, globalConfig]);
+
+  const [state, setState] = useState(initialState);
 
   const updateState = (updates) =>
     setState((prev) => ({ ...prev, ...updates }));
@@ -47,7 +77,7 @@ function OnboardingScreen() {
 
   const navigateSteps = async (stepChange) => {
     const newStep = state.currentStep + stepChange;
-    await globalConfig.setAsync("CurrentStep", newStep); // Update CurrentStep in global config
+    await globalConfig.setAsync("CurrentStep", newStep);
     updateState({ currentStep: newStep });
   };
 
@@ -182,7 +212,7 @@ function OnboardingScreen() {
       flexDirection="row"
       justifyContent="space-between"
       alignItems="center"
-      marginBottom="16px" // Or any desired margin
+      marginBottom="16px"
     >
       <Label width="33%">{label}</Label>
       <Icon name="right" size={16} />

@@ -5,6 +5,8 @@ import {
   Loader,
   Button,
   Box,
+  Text,
+  Heading,
   useGlobalConfig,
 } from "@airtable/blocks/ui";
 import React, { Fragment, useState } from "react";
@@ -35,12 +37,12 @@ function VersiumEnrichment() {
   const records = useRecords(table, { fields: [LinkedinFieldId] });
 
   // Safe access with optional chaining and default values
-  const FIRST_NAME_OUTPUT_FIELD_NAME = fieldMappings.firstName || null;
-  const LAST_NAME_OUTPUT_FIELD_NAME = fieldMappings.lastName || null;
-  const EMAIL_OUTPUT_FIELD_NAME = fieldMappings.email || null;
-  const TITLE_OUTPUT_FIELD_NAME = fieldMappings.title || null;
-  const BUSINESS_OUTPUT_FIELD_NAME = fieldMappings.business || null;
-  const COMPANY_DOMAIN_FIELD_NAME = fieldMappings.domain || null;
+  const FIRST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.firstName || null;
+  const LAST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.lastName || null;
+  const EMAIL_OUTPUT_FIELD_NAME = fieldMappings?.email || null;
+  const TITLE_OUTPUT_FIELD_NAME = fieldMappings?.title || null;
+  const BUSINESS_OUTPUT_FIELD_NAME = fieldMappings?.business || null;
+  const COMPANY_DOMAIN_FIELD_NAME = fieldMappings?.domain || null;
 
   if (
     !apiKey ||
@@ -50,7 +52,7 @@ function VersiumEnrichment() {
     !TITLE_OUTPUT_FIELD_NAME ||
     !BUSINESS_OUTPUT_FIELD_NAME ||
     !COMPANY_DOMAIN_FIELD_NAME ||
-    currentStep !== 3
+    currentStep !== 2
   ) {
     return <OnboardingScreen />;
   }
@@ -97,28 +99,26 @@ function VersiumEnrichment() {
       display="flex"
       flexDirection="column"
       justifyContent="center"
-      alignItems="center"
       padding={3}
     >
-      <h2 style={{ textAlign: "center", marginBottom: "16px" }}>
-        🌟 Versium for Airtable
-      </h2>
-      <p style={{ textAlign: "center", marginBottom: "40px", maxWidth: "80%" }}>
-        Transform your marketing data with Versium for Airtable, a suite of
-        powerful data enrichment and cleansing tools seamlessly integrated into
-        your Airtable workflow.
-      </p>
+      <Heading style={{ fontWeight: "bold", marginBottom: "16px" }}>
+        Enrich records
+      </Heading>
+      <Text style={{ marginBottom: "24px" }}>
+        Start enriching fields by clicking the button below. Reconfigure
+        settings to change the fields that shoud be enriched.
+      </Text>
       {isUpdateInProgress ? (
         <Loader />
       ) : (
         <Fragment>
           <Button
-            variant="primary"
+            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
             size="large" // Make the button larger
             onClick={onButtonClick}
             disabled={!permissionCheck.hasPermission}
             icon="plus" // Add an icon to the button (Assuming Airtable Blocks support button icons)
-            marginBottom={3}
+            marginBottom={1}
           >
             Start enriching
           </Button>
@@ -127,14 +127,13 @@ function VersiumEnrichment() {
             size="small"
             onClick={onReconfigureClick}
             style={{
-              marginTop: "10px",
-              background: "transparent", // No background color
-              color: "#0070f3", // Optional: choose a color that fits your design
-              border: "none", // No border
-              boxShadow: "none", // No shadow
+              background: "transparent",
+              color: "#6C57C0",
+              border: "none",
+              boxShadow: "none",
             }}
           >
-            Reconfigure fields
+            Reconfigure settings
           </Button>
           {!permissionCheck.hasPermission && (
             <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
