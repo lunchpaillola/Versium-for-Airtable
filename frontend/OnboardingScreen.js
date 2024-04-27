@@ -10,6 +10,9 @@ import {
   Label,
   Dialog,
   useGlobalConfig,
+  Link,
+  Heading,
+  Icon,
 } from "@airtable/blocks/ui";
 import React, { useState } from "react";
 
@@ -132,44 +135,8 @@ function OnboardingScreen() {
       case 1:
         try {
           await globalConfig.setAsync("Table", selectedTable.id);
-          await navigateSteps(1);
-        } catch (error) {
-          console.error("Error updating globalConfig:", error);
-          updateState({
-            error: "An error occurred while updating the configuration.",
-            isLoading: false,
-          });
-        }
-        break;
-
-      case 2:
-        try {
           await globalConfig.setAsync("View", selectedView.id);
-          await navigateSteps(1);
-        } catch (error) {
-          console.error("Error updating globalConfig:", error);
-          updateState({
-            error: "An error occurred while updating the configuration.",
-            isLoading: false,
-          });
-        }
-        break;
-
-      case 3:
-        try {
           await globalConfig.setAsync("LinkedIn", selectedLinkedin.id);
-          await navigateSteps(1);
-        } catch (error) {
-          console.error("Error updating globalConfig:", error);
-          updateState({
-            error: "An error occurred while updating the configuration.",
-            isLoading: false,
-          });
-        }
-        break;
-
-      case 4:
-        try {
           await globalConfig.setAsync("fieldMappings", {
             firstName: selectedFirstName.id,
             lastName: selectedLastName.id,
@@ -180,9 +147,10 @@ function OnboardingScreen() {
           });
           await navigateSteps(1);
         } catch (error) {
-          console.error("Error saving onboarding configuration:", error);
+          console.error("Error updating globalConfig:", error);
           updateState({
-            error: "Failed to save onboarding configuration.",
+            error: "An error occurred while updating the configuration.",
+            isLoading: false,
           });
         }
         break;
@@ -201,18 +169,31 @@ function OnboardingScreen() {
 
   //UI components
 
-  const StepIndicator = ({ stepText }) => (
-    <Text
-      size="small"
-      style={{
-        fontWeight: "bold",
-        marginBottom: "24px",
-        marginTop: "12px",
-        textAlign: "center",
-      }}
+  const FieldMapping = ({
+    label,
+    table,
+    selectedField,
+    updateState,
+    fieldKey,
+  }) => (
+    <Box
+      width="100%"
+      display="flex"
+      flexDirection="row"
+      justifyContent="space-between"
+      alignItems="center"
+      marginBottom="16px" // Or any desired margin
     >
-      {stepText}
-    </Text>
+      <Label width="33%">{label}</Label>
+      <Icon name="right" size={16} />
+      <FieldPicker
+        table={table}
+        field={selectedField}
+        onChange={(newValue) => updateState({ [fieldKey]: newValue })}
+        width="50%"
+        shouldAllowPickingNone={false}
+      />
+    </Box>
   );
 
   const PrimaryButton = ({ children, onClick, disabled }) => (
@@ -231,15 +212,14 @@ function OnboardingScreen() {
       {currentStep === 0 && (
         <>
           {/* API Key Input Step */}
-          <h1
+          <Heading
             style={{
-              textAlign: "left",
               fontWeight: "bold",
               marginBottom: "16px",
             }}
           >
-            Enter Versium API key
-          </h1>
+            Enter API key
+          </Heading>
           <Text
             style={{
               textAlign: "left",
@@ -247,21 +227,21 @@ function OnboardingScreen() {
             }}
           >
             To use this extension, you need a Versium API key. Sign up at{" "}
-            <a
+            <Link
               href="https://app.versium.com/create-account"
               target="_blank"
               rel="noreferrer"
             >
               Versium
-            </a>
+            </Link>
             , log in, and retrieve your API key from{" "}
-            <a
+            <Link
               href="https://app.versium.com/account/manage-api-keys"
               target="_blank"
               rel="noreferrer"
             >
               Manage API Keys
-            </a>{" "}
+            </Link>{" "}
             in your account settings.
           </Text>
           <Input
@@ -273,17 +253,26 @@ function OnboardingScreen() {
             }
             placeholder="Versium API Key"
             required={true}
-            style={{ marginBottom: 3 }}
           />
+          <Label size="small" paddingTop={2}>
+            ⚠️Note: the API key will be visible to all collaborators
+          </Label>
           <PrimaryButton onClick={validateApiKey} disabled={!apiKey}>
             Next: Configure Settings
           </PrimaryButton>
-          <StepIndicator stepText="Step 1 of 5" />
         </>
       )}
 
       {currentStep === 1 && (
         <>
+          <Heading
+            style={{
+              fontWeight: "bold",
+              marginBottom: "16px",
+            }}
+          >
+            Settings
+          </Heading>
           {/* Table Selection Step */}
           <Label>Select the table with the records you want to enrich:</Label>
           <TablePicker
@@ -294,161 +283,131 @@ function OnboardingScreen() {
               });
             }}
             width="100%"
-            shouldAllowPickingNone={false}
+            shouldAllowPickingNone={true}
           />
-          <PrimaryButton onClick={handleComplete} disabled={!selectedTable}>
-            Next: Select View
-          </PrimaryButton>
-          <StepIndicator stepText="Step 2 of 5" />
-        </>
-      )}
+          {selectedTable && (
+            <>
+              <Label
+                style={{
+                  textAlign: "left",
+                  marginTop: "16px",
+                }}
+              >
+                Select the view:
+              </Label>
+              <ViewPicker
+                table={selectedTable}
+                view={selectedView}
+                onChange={(newValue) =>
+                  updateState({
+                    selectedView: newValue,
+                  })
+                }
+                width="100%"
+                shouldAllowPickingNone={false}
+              />
+              <Label
+                style={{
+                  textAlign: "left",
+                  marginTop: "16px",
+                }}
+              >
+                Select the field with the Linkedin url that the extension should
+                enrich:
+              </Label>
+              {/* LinkedIn ID Field Mapping */}
+              <FieldPicker
+                table={selectedTable}
+                field={selectedLinkedin}
+                onChange={(newValue) =>
+                  updateState({
+                    selectedLinkedin: newValue,
+                  })
+                }
+                width="100%"
+                shouldAllowPickingNone={false}
+              />
+              <Label
+                paddingTop={3}
+                style={{
+                  textAlign: "left",
+                  marginTop: "16px",
+                }}
+              >
+                Map extension ouputs to fields in your table
+              </Label>
+              <Box
+                width="100%"
+                paddingTop={3}
+                style={{
+                  borderTop: "1px solid #E8E8E8",
+                  borderBottom: "1px solid #E8E8E8",
+                }}
+              >
+                {/* Field Mapping Step */}
 
-      {currentStep === 2 && selectedTable && (
-        <>
-          {/* View Selection Step */}
-          <Label>Select the view:</Label>
-          <ViewPicker
-            table={selectedTable}
-            view={selectedView}
-            onChange={(newValue) =>
-              updateState({
-                selectedView: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
-          <PrimaryButton onClick={handleComplete} disabled={!selectedView}>
-            Next: Map Input Field
-          </PrimaryButton>
-          <StepIndicator stepText="Step 3 of 5" />
-        </>
-      )}
+                {/* First name field mapping */}
+                <FieldMapping
+                  label="First name"
+                  table={selectedTable}
+                  selectedField={selectedFirstName}
+                  updateState={updateState}
+                  fieldKey="selectedFirstName"
+                />
 
-      {currentStep === 3 && selectedTable && (
-        <>
-          {/* View Selection Step */}
-          <Label>
-            Select the LinkedIn url that the extension should enrich:
-          </Label>
-          {/* LinkedIn ID Field Mapping */}
-          <FieldPicker
-            table={selectedTable}
-            field={selectedLinkedin}
-            onChange={(newValue) =>
-              updateState({
-                selectedLinkedin: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
-          <Button
-            onClick={handleComplete}
-            disabled={!selectedView}
-            marginTop={3}
-            style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
-          >
-            Next: Map Output Fields
-          </Button>
-          <StepIndicator stepText="Step 4 of 5" />
-        </>
-      )}
+                {/* Last name field mapping */}
+                <FieldMapping
+                  label="Last name"
+                  table={selectedTable}
+                  selectedField={selectedLastName}
+                  updateState={updateState}
+                  fieldKey="selectedLastName"
+                />
 
-      {currentStep === 4 && selectedTable && (
-        <>
-          {/* Field Mapping Step */}
-          <Text paddingBottom={3}>Map Output fields:</Text>
+                {/* Email Field Mapping */}
+                <FieldMapping
+                  label="Email"
+                  table={selectedTable}
+                  selectedField={selectedEmail}
+                  updateState={updateState}
+                  fieldKey="selectedEmail"
+                />
 
-          {/* First name field mapping */}
-          <Label>First name field</Label>
-          <FieldPicker
-            table={selectedTable}
-            field={selectedFirstName}
-            onChange={(newValue) =>
-              updateState({
-                selectedFirstName: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
+                {/* Title Field Mapping */}
+                <FieldMapping
+                  label="Title"
+                  table={selectedTable}
+                  selectedField={selectedTitle}
+                  updateState={updateState}
+                  fieldKey="selectedTitle"
+                />
 
-          {/* Last name field mapping */}
-          <Label>Last name field</Label>
-          <FieldPicker
-            table={selectedTable}
-            field={selectedLastName}
-            onChange={(newValue) =>
-              updateState({
-                selectedLastName: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
+                {/* Business Field Mapping */}
+                <FieldMapping
+                  label="Business"
+                  table={selectedTable}
+                  selectedField={selectedBusiness}
+                  updateState={updateState}
+                  fieldKey="selectedBusiness"
+                />
 
-          {/* Email Field Mapping */}
-          <Label>Email field</Label>
-          <FieldPicker
-            table={selectedTable}
-            field={selectedEmail}
-            onChange={(newValue) =>
-              updateState({
-                selectedEmail: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
-
-          {/* Title Field Mapping */}
-          <Label>Title field</Label>
-          <FieldPicker
-            table={selectedTable}
-            field={selectedTitle}
-            onChange={(newValue) =>
-              updateState({
-                selectedTitle: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
-
-          {/* Business Field Mapping */}
-          <Label>Business field</Label>
-          <FieldPicker
-            table={selectedTable}
-            field={selectedBusiness}
-            onChange={(newValue) =>
-              updateState({
-                selectedBusiness: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
-
-          {/* Domain Field Mapping */}
-          <Text paddingTop={3} paddingBottom={1}>
-            Domain field
-          </Text>
-          <FieldPicker
-            table={selectedTable}
-            field={selectedDomain}
-            onChange={(newValue) =>
-              updateState({
-                selectedDomain: newValue,
-              })
-            }
-            width="100%"
-            shouldAllowPickingNone={false}
-          />
-
+                {/* Domain Field Mapping */}
+                <FieldMapping
+                  label="Domain"
+                  table={selectedTable}
+                  selectedField={selectedDomain}
+                  updateState={updateState}
+                  fieldKey="selectedDomain"
+                />
+              </Box>
+            </>
+          )}
           <PrimaryButton
             onClick={handleComplete}
             disabled={
+              !selectedTable ||
+              !selectedView ||
+              !selectedLinkedin ||
               !selectedDomain ||
               !selectedEmail ||
               !selectedTitle ||
@@ -457,9 +416,8 @@ function OnboardingScreen() {
               !selectedLastName
             }
           >
-            Complete Setup
+            Save settings
           </PrimaryButton>
-          <StepIndicator stepText="Step 5 of 5" />
         </>
       )}
 

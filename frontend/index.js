@@ -50,7 +50,7 @@ function VersiumEnrichment() {
     !TITLE_OUTPUT_FIELD_NAME ||
     !BUSINESS_OUTPUT_FIELD_NAME ||
     !COMPANY_DOMAIN_FIELD_NAME ||
-    currentStep !== 5
+    currentStep !== 3
   ) {
     return <OnboardingScreen />;
   }
@@ -83,7 +83,7 @@ function VersiumEnrichment() {
   }
 
   async function onReconfigureClick() {
-    await globalConfig.setAsync("CurrentStep", 0);
+    await globalConfig.setAsync("CurrentStep", 1);
     return <OnboardingScreen />;
   }
 
