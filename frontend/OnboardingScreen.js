@@ -29,7 +29,7 @@ function OnboardingScreen() {
       apiKey: globalConfig.get("API Key") || "",
       isLoading: false,
       error: "",
-      currentStep: globalConfig.get("currentStep") || 0,
+      currentStep: globalConfig.get("CurrentStep") || 0,
       selectedTable: selectedTable,
       selectedView:
         selectedTable?.getViewByIdIfExists(globalConfig.get("View")) || null,
@@ -239,7 +239,7 @@ function OnboardingScreen() {
 
   return (
     <Box display="flex" flexDirection="column" padding={3}>
-      {currentStep === 0 && (
+      {(currentStep === 0 || !apiKey) && (
         <>
           {/* API Key Input Step */}
           <Heading
@@ -448,6 +448,19 @@ function OnboardingScreen() {
           >
             Save settings
           </PrimaryButton>
+          <Button
+            variant="default"
+            size="small"
+            onClick={() => navigateSteps(-1)}
+            style={{
+              background: "transparent",
+              color: "#6C57C0",
+              border: "none",
+              boxShadow: "none",
+            }}
+          >
+            Reconnect API Key
+          </Button>
         </>
       )}
 
