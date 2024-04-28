@@ -288,7 +288,7 @@ function OnboardingScreen() {
             ⚠️Note: the API key will be visible to all collaborators
           </Label>
           <PrimaryButton onClick={validateApiKey} disabled={!apiKey}>
-            Next: Configure Settings
+            Next: configure settings
           </PrimaryButton>
         </>
       )}

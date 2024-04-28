@@ -7,6 +7,7 @@ import {
   Box,
   Text,
   Heading,
+  Dialog,
   useGlobalConfig,
 } from "@airtable/blocks/ui";
 import React, { Fragment, useState } from "react";
@@ -24,17 +25,23 @@ function VersiumEnrichment() {
   // load the records ready to be updated
 
   const [isUpdateInProgress, setIsUpdateInProgress] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [recordUpdates, setRecordUpdates] = useState(false);
   const globalConfig = useGlobalConfig();
   const apiKey = globalConfig.get("API Key");
   const tableId = globalConfig.get("Table");
+  const viewId = globalConfig.get("View");
   const LinkedinFieldId = globalConfig.get("LinkedIn");
   const currentStep = globalConfig.get("CurrentStep");
-
   const fieldMappings = globalConfig.get("fieldMappings") || {};
 
   const table = base.getTableByIdIfExists(tableId);
+  const view = table.getViewByIdIfExists(viewId);
+  const tableName = table?.name;
+  const viewName = view?.name;
 
-  const records = useRecords(table, { fields: [LinkedinFieldId] });
+  const records = useRecords(view, { fields: [LinkedinFieldId] });
+  const recordCount = records.length;
 
   // Safe access with optional chaining and default values
   const FIRST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.firstName || null;
@@ -69,7 +76,6 @@ function VersiumEnrichment() {
   async function onButtonClick() {
     setIsUpdateInProgress(true);
     const recordUpdates = await getEnrichment(
-      table,
       LinkedinFieldId,
       records,
       apiKey,
@@ -81,7 +87,9 @@ function VersiumEnrichment() {
       COMPANY_DOMAIN_FIELD_NAME
     );
     await updateRecordsInBatchesAsync(table, recordUpdates);
+    setRecordUpdates(recordUpdates);
     setIsUpdateInProgress(false);
+    setIsDialogOpen(true);
   }
 
   async function onReconfigureClick() {
@@ -102,14 +110,23 @@ function VersiumEnrichment() {
       padding={3}
     >
       <Heading style={{ fontWeight: "bold", marginBottom: "16px" }}>
-        Enrich records
+        Enrich {recordCount} Records in the {tableName} table
       </Heading>
       <Text style={{ marginBottom: "24px" }}>
-        Start enriching fields by clicking the button below. Reconfigure
-        settings to change the fields that shoud be enriched.
+        Based on the settings you've configured there are
+        <span style={{ fontWeight: "bold" }}> {recordCount} </span>
+        records that you want to enrich from view:
+        <span style={{ fontWeight: "bold" }}> {viewName} </span>
+        in table:
+        <span style={{ fontWeight: "bold" }}> {tableName} </span>. To start
+        enriching with Versium's API select the button below. To reconfigure
+        records, select the "reconfigure" button below.
       </Text>
       {isUpdateInProgress ? (
-        <Loader />
+        <Loader
+          scale={0.8}
+          style={{ alignItems: "center", justifyContent: "center" }}
+        />
       ) : (
         <Fragment>
           <Button
@@ -120,7 +137,7 @@ function VersiumEnrichment() {
             icon="plus" // Add an icon to the button (Assuming Airtable Blocks support button icons)
             marginBottom={1}
           >
-            Start enriching
+            Enrich {recordCount} records
           </Button>
           <Button
             variant="default"
@@ -133,7 +150,7 @@ function VersiumEnrichment() {
               boxShadow: "none",
             }}
           >
-            Reconfigure settings
+            Reconfigure selection
           </Button>
           {!permissionCheck.hasPermission && (
             <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
@@ -142,14 +159,27 @@ function VersiumEnrichment() {
           )}
         </Fragment>
       )}
+      {isDialogOpen && (
+        <Dialog onClose={() => setIsDialogOpen(false)}>
+          <Heading>Enrichment completed</Heading>
+          <Text>
+            The extension found matches and enriched {recordUpdates.length} out
+            of {recordCount} total records. Reconfigure settings to enrich a
+            different set of records.
+          </Text>
+          <Button marginTop={3} onClick={() => setIsDialogOpen(false)}>
+            Close
+          </Button>
+        </Dialog>
+      )}
     </Box>
   );
 }
 
 async function getEnrichment(
-  apiKey,
   LinkedinFieldId,
   records,
+  apiKey,
   FIRST_NAME_OUTPUT_FIELD_NAME,
   LAST_NAME_OUTPUT_FIELD_NAME,
   EMAIL_OUTPUT_FIELD_NAME,
@@ -160,7 +190,7 @@ async function getEnrichment(
   const recordUpdates = [];
   for (const record of records) {
     // For each record, we take the email address and make an API request to Versium:
-    const linkedinUrl = record.getCellValueAsString(LinkedinFieldId); // Ensure `emailField` is defined and corresponds to the field in your records containing the email addresses.
+    const linkedinUrl = record.getCellValueAsString(LinkedinFieldId);
     const requestUrl = `${API_ENDPOINT}/c2b?li_url=${encodeURIComponent(
       linkedinUrl
     )}`;
