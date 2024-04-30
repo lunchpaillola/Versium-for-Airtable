@@ -21,6 +21,23 @@ function OnboardingScreen() {
   const globalConfig = useGlobalConfig();
   const base = useBase();
 
+  const [state, setState] = useState(initialState);
+  const {
+    apiKey,
+    isLoading,
+    error,
+    currentStep,
+    selectedTable,
+    selectedView,
+    selectedLinkedin,
+    selectedEmail,
+    selectedTitle,
+    selectedBusiness,
+    selectedDomain,
+    selectedFirstName,
+    selectedLastName,
+  } = state;
+
   // Initial state setup
   const initialState = useMemo(() => {
     const tableId = globalConfig.get("Table");
@@ -63,8 +80,6 @@ function OnboardingScreen() {
     };
   }, [base, globalConfig]);
 
-  const [state, setState] = useState(initialState);
-
   const updateState = (updates) =>
     setState((prev) => ({ ...prev, ...updates }));
 
@@ -80,22 +95,6 @@ function OnboardingScreen() {
     await globalConfig.setAsync("CurrentStep", newStep);
     updateState({ currentStep: newStep });
   };
-
-  const {
-    apiKey,
-    isLoading,
-    error,
-    currentStep,
-    selectedTable,
-    selectedView,
-    selectedLinkedin,
-    selectedEmail,
-    selectedTitle,
-    selectedBusiness,
-    selectedDomain,
-    selectedFirstName,
-    selectedLastName,
-  } = state;
 
   /**
    * Validates the provided API key by making a request to the API.
