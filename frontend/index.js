@@ -7,16 +7,16 @@ import {
   Box,
   Text,
   Heading,
-  Dialog,
   useGlobalConfig,
 } from "@airtable/blocks/ui";
 import React, { Fragment, useState } from "react";
 import OnboardingScreen from "./OnboardingScreen";
+import { CustomDialog } from "./components";
 
+/** Constants */
 // Airtable SDK limit: we can only update 50 records at a time. For more details, see
 // https://support.airtable.com/docs/managing-api-call-limits-in-airtable#:~:text=Airtable%20enforces%20a%20rate%20limit,given%20user%20or%20service%20account.
 const MAX_RECORDS_PER_UPDATE = 50;
-
 const API_ENDPOINT = "https://api.versium.com/v2";
 
 function VersiumEnrichment() {
@@ -43,7 +43,7 @@ function VersiumEnrichment() {
   const records = useRecords(view, { fields: [LinkedinFieldId] });
   const recordCount = records?.length;
 
-  // Safe access with optional chaining and default values
+
   const FIRST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.firstName || null;
   const LAST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.lastName || null;
   const EMAIL_OUTPUT_FIELD_NAME = fieldMappings?.email || null;
@@ -118,9 +118,7 @@ function VersiumEnrichment() {
         records that you want to enrich from view:
         <span style={{ fontWeight: "bold" }}> {viewName} </span>
         in table:
-        <span style={{ fontWeight: "bold" }}> {tableName} </span>. To start
-        enriching with Versium's API select the button below. To reconfigure
-        records, select the "reconfigure" button below.
+        <span style={{ fontWeight: "bold" }}> {tableName} </span>.
       </Text>
       {isUpdateInProgress ? (
         <Loader
@@ -131,13 +129,12 @@ function VersiumEnrichment() {
         <Fragment>
           <Button
             style={{ backgroundColor: "#6C57C0", color: "#ffffff" }}
-            size="large" // Make the button larger
+            size="large"
             onClick={onButtonClick}
             disabled={!permissionCheck.hasPermission}
-            icon="plus" // Add an icon to the button (Assuming Airtable Blocks support button icons)
             marginBottom={1}
           >
-            Enrich {recordCount} records
+            Begin enrichment
           </Button>
           <Button
             variant="default"
@@ -150,7 +147,7 @@ function VersiumEnrichment() {
               boxShadow: "none",
             }}
           >
-            Reconfigure selection
+            Reselect records
           </Button>
           {!permissionCheck.hasPermission && (
             <p style={{ color: "red", marginTop: "10px", textAlign: "center" }}>
@@ -160,17 +157,13 @@ function VersiumEnrichment() {
         </Fragment>
       )}
       {isDialogOpen && (
-        <Dialog onClose={() => setIsDialogOpen(false)}>
-          <Heading>Enrichment completed</Heading>
-          <Text>
-            The extension found matches and enriched {recordUpdates.length} out
-            of {recordCount} total records. Reconfigure settings to enrich a
-            different set of records.
-          </Text>
-          <Button marginTop={3} onClick={() => setIsDialogOpen(false)}>
-            Close
-          </Button>
-        </Dialog>
+        <CustomDialog
+          title="Enrichment Completed"
+          onClose={() => setIsDialogOpen(false)}
+        >
+          The extension found matches and enriched {recordUpdates.length} out of{" "}
+          {recordCount} total records.
+        </CustomDialog>
       )}
     </Box>
   );

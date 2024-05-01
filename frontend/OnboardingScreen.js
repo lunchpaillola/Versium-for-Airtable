@@ -5,7 +5,7 @@ import {
   useGlobalConfig,
   useBase,
 } from "@airtable/blocks/ui";
-import { APIKeyInput, ErrorDialog, SettingsComponent } from "./components";
+import { APIKeyInput, CustomDialog, SettingsComponent } from "./components";
 import React, { useState, useEffect } from "react";
 
 function OnboardingScreen() {
@@ -88,15 +88,6 @@ function OnboardingScreen() {
    */
   const updateState = (updates) =>
     setState((prev) => ({ ...prev, ...updates }));
-
-  /**
-   * Clears any existing error messages from the state.
-   * This function is typically called to reset the error state when a user closes an error dialog,
-   * indicating that they have acknowledged the error message.
-   */
-  const clearError = () => {
-    updateState({ error: "" });
-  };
 
   /**
    * Navigates to the specified step by changing the current step in both the local state and global configuration.
@@ -276,7 +267,15 @@ function OnboardingScreen() {
         </>
       )}
 
-      {error && <ErrorDialog error={error} clearError={clearError} />}
+      {error && (
+        <CustomDialog
+          title="Error"
+          onClose={() => updateState({ error: "" })}
+          color="red"
+        >
+          {error}
+        </CustomDialog>
+      )}
 
       {isLoading && <Loader />}
     </Box>
