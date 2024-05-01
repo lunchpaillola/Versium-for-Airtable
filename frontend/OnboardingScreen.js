@@ -6,13 +6,51 @@ import {
   useBase,
 } from "@airtable/blocks/ui";
 import { APIKeyInput, CustomDialog, SettingsComponent } from "./components";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 function OnboardingScreen() {
-  const globalConfig = useGlobalConfig();
   const base = useBase();
+  const globalConfig = useGlobalConfig();
 
-  const [state, setState] = useState({});
+  // Extracting configuration values directly
+  const tableId = globalConfig.get("Table");
+  const viewId = globalConfig.get("View");
+  const linkedinFieldId = globalConfig.get("LinkedIn");
+  const fieldMappings = globalConfig.get("fieldMappings") || {};
+  const table = base.getTableByIdIfExists(tableId);
+
+  // Initialize state directly using all available configurations
+  const initialState = {
+    apiKey: globalConfig.get("API Key") || "",
+    isLoading: false,
+    error: "",
+    currentStep: globalConfig.get("CurrentStep") || 0,
+    selectedTable: table,
+    selectedView: table ? table.getViewByIdIfExists(viewId) : null,
+    selectedLinkedin: table
+      ? table.getFieldByIdIfExists(linkedinFieldId)
+      : null,
+    selectedEmail: table
+      ? table.getFieldByIdIfExists(fieldMappings.email)
+      : null,
+    selectedTitle: table
+      ? table.getFieldByIdIfExists(fieldMappings.title)
+      : null,
+    selectedBusiness: table
+      ? table.getFieldByIdIfExists(fieldMappings.business)
+      : null,
+    selectedDomain: table
+      ? table.getFieldByIdIfExists(fieldMappings.domain)
+      : null,
+    selectedFirstName: table
+      ? table.getFieldByIdIfExists(fieldMappings.firstName)
+      : null,
+    selectedLastName: table
+      ? table.getFieldByIdIfExists(fieldMappings.lastName)
+      : null,
+  };
+
+  const [state, setState] = useState(initialState);
   const {
     apiKey,
     isLoading,
@@ -27,60 +65,7 @@ function OnboardingScreen() {
     selectedDomain,
     selectedFirstName,
     selectedLastName,
-  } = state || {};
-
-  useEffect(() => {
-    const fetchInitialState = async () => {
-      const tableId = globalConfig.get("Table");
-      const selectedTable = base.getTableIfExists(tableId);
-      console.log("selectedTable", selectedTable);
-      let initialState = {
-        apiKey: globalConfig.get("API Key") || null,
-        isLoading: false,
-        error: "",
-        currentStep: globalConfig.get("CurrentStep") || 0,
-        selectedTable: selectedTable,
-      };
-
-      if (selectedTable) {
-        initialState = {
-          ...initialState,
-          selectedView:
-            selectedTable.getViewByIdIfExists(globalConfig.get("View")) || null,
-          selectedLinkedin:
-            selectedTable.getFieldByIdIfExists(globalConfig.get("LinkedIn")) ||
-            null,
-        };
-
-        const fieldMappings = globalConfig.get("fieldMappings");
-
-        if (fieldMappings) {
-          initialState = {
-            ...initialState,
-            selectedEmail:
-              selectedTable.getFieldByIdIfExists(fieldMappings.email) || null,
-            selectedTitle:
-              selectedTable.getFieldByIdIfExists(fieldMappings.title) || null,
-            selectedBusiness:
-              selectedTable.getFieldByIdIfExists(fieldMappings.business) ||
-              null,
-            selectedDomain:
-              selectedTable.getFieldByIdIfExists(fieldMappings.domain) || null,
-            selectedFirstName:
-              selectedTable.getFieldByIdIfExists(fieldMappings.firstName) ||
-              null,
-            selectedLastName:
-              selectedTable.getFieldByIdIfExists(fieldMappings.lastName) ||
-              null,
-          };
-        }
-      }
-
-      setState(initialState);
-    };
-
-    fetchInitialState();
-  }, [base, globalConfig]);
+  } = state;
 
   /**
    * Update state with new values.

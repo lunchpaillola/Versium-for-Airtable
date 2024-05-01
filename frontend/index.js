@@ -21,40 +21,46 @@ const API_ENDPOINT = "https://api.versium.com/v2";
 
 function VersiumEnrichment() {
   const base = useBase();
+  const globalConfig = useGlobalConfig();
 
   // load the records ready to be updated
 
   const [isUpdateInProgress, setIsUpdateInProgress] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [recordUpdates, setRecordUpdates] = useState(false);
-  const globalConfig = useGlobalConfig();
+
+  //getting configs
   const apiKey = globalConfig.get("API Key");
   const tableId = globalConfig.get("Table");
   const viewId = globalConfig.get("View");
   const LinkedinFieldId = globalConfig.get("LinkedIn");
   const currentStep = globalConfig.get("CurrentStep");
   const fieldMappings = globalConfig.get("fieldMappings") || {};
+  const table = base && base.getTableByIdIfExists(tableId);
+  const view = table && table.getViewByIdIfExists(viewId);
 
-  const table = base?.getTableByIdIfExists(tableId);
-  const view = table?.getViewByIdIfExists(viewId);
-  const tableName = table?.name;
-  const viewName = view?.name;
+  const {
+    firstName: FIRST_NAME_OUTPUT_FIELD_NAME,
+    lastName: LAST_NAME_OUTPUT_FIELD_NAME,
+    email: EMAIL_OUTPUT_FIELD_NAME,
+    title: TITLE_OUTPUT_FIELD_NAME,
+    business: BUSINESS_OUTPUT_FIELD_NAME,
+    domain: COMPANY_DOMAIN_FIELD_NAME,
+  } = fieldMappings;
+
+  const tableName = table && table.name;
+  const viewName = view && view.name;
 
   const records = useRecords(view, { fields: [LinkedinFieldId] });
-  const recordCount = records?.length;
-
-
-  const FIRST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.firstName || null;
-  const LAST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.lastName || null;
-  const EMAIL_OUTPUT_FIELD_NAME = fieldMappings?.email || null;
-  const TITLE_OUTPUT_FIELD_NAME = fieldMappings?.title || null;
-  const BUSINESS_OUTPUT_FIELD_NAME = fieldMappings?.business || null;
-  const COMPANY_DOMAIN_FIELD_NAME = fieldMappings?.domain || null;
+  const recordCount = records && records.length;
 
   if (
     !apiKey ||
-    !table ||
+    !tableId ||
+    !viewId ||
     !LinkedinFieldId ||
+    !currentStep ||
+    !fieldMappings ||
     !EMAIL_OUTPUT_FIELD_NAME ||
     !TITLE_OUTPUT_FIELD_NAME ||
     !BUSINESS_OUTPUT_FIELD_NAME ||
@@ -113,7 +119,7 @@ function VersiumEnrichment() {
         Enrich {recordCount} Records in the {tableName} table
       </Heading>
       <Text style={{ marginBottom: "24px" }}>
-        Based on the settings you've configured there are
+        Based on the settings configured there are
         <span style={{ fontWeight: "bold" }}> {recordCount} </span>
         records that you want to enrich from view:
         <span style={{ fontWeight: "bold" }}> {viewName} </span>
