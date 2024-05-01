@@ -35,13 +35,13 @@ function VersiumEnrichment() {
   const currentStep = globalConfig.get("CurrentStep");
   const fieldMappings = globalConfig.get("fieldMappings") || {};
 
-  const table = base.getTableByIdIfExists(tableId);
-  const view = table.getViewByIdIfExists(viewId);
+  const table = base?.getTableByIdIfExists(tableId);
+  const view = table?.getViewByIdIfExists(viewId);
   const tableName = table?.name;
   const viewName = view?.name;
 
   const records = useRecords(view, { fields: [LinkedinFieldId] });
-  const recordCount = records.length;
+  const recordCount = records?.length;
 
   // Safe access with optional chaining and default values
   const FIRST_NAME_OUTPUT_FIELD_NAME = fieldMappings?.firstName || null;
