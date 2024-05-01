@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Loader,
-  Text,
   useGlobalConfig,
   useBase,
 } from "@airtable/blocks/ui";
@@ -28,7 +27,7 @@ function OnboardingScreen() {
     selectedDomain,
     selectedFirstName,
     selectedLastName,
-  } = state;
+  } = state || {};
 
   useEffect(() => {
     const fetchInitialState = async () => {
@@ -91,6 +90,15 @@ function OnboardingScreen() {
     setState((prev) => ({ ...prev, ...updates }));
 
   /**
+   * Clears any existing error messages from the state.
+   * This function is typically called to reset the error state when a user closes an error dialog,
+   * indicating that they have acknowledged the error message.
+   */
+  const clearError = () => {
+    updateState({ error: "" });
+  };
+
+  /**
    * Navigates to the specified step by changing the current step in both the local state and global configuration.
    *
    * @param {number} stepChange - The increment or decrement to apply to the current step.
@@ -112,6 +120,7 @@ function OnboardingScreen() {
    */
   async function checkGlobalConfigPermissions() {
     const setUnknownKeyCheckResult = globalConfig.checkPermissionsForSet();
+    console.log("setUnknownKeyCheckResult", setUnknownKeyCheckResult);
     if (!setUnknownKeyCheckResult.hasPermission) {
       // Display the reason and halt further execution if permission is denied
       updateState({
@@ -129,13 +138,12 @@ function OnboardingScreen() {
    * @return {Promise<boolean>} - Returns `true` if the API key is valid, otherwise `false`.
    */
   const validateApiKey = async () => {
+    updateState({ isLoading: true });
     // Check global configuration permissions before making any changes
     if (!(await checkGlobalConfigPermissions())) {
       console.log("Insufficient permissions to set global configuration.");
       return false;
     }
-
-    updateState({ isLoading: true });
     const testUrl = "https://api.versium.com/v2/contact";
     console.log("Validating apiKey:", apiKey);
 
@@ -144,10 +152,6 @@ function OnboardingScreen() {
         method: "GET",
         headers: { "x-versium-api-key": apiKey },
       });
-
-      if (!response.ok) {
-        throw new Error("API request failed with status " + response.status);
-      }
 
       const data = await response.json();
 
@@ -272,11 +276,7 @@ function OnboardingScreen() {
         </>
       )}
 
-      {error && (
-        <ErrorDialog onClose={() => updateState({ error: "" })} width="100%">
-          <Text style={{ color: "red" }}>{error}</Text>
-        </ErrorDialog>
-      )}
+      {error && <ErrorDialog error={error} clearError={clearError} />}
 
       {isLoading && <Loader />}
     </Box>
