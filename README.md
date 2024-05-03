@@ -2,6 +2,8 @@
 
 This extension for Airtable allows users to input LinkedIn URLs and retrieve corresponding professional details including the individual's name, company, domain, and other relevant company information using Versium's API.
 
+[![Watch the demo](https://img.youtube.com/vi/UM5W56AMpNI/0.jpg)](https://www.youtube.com/watch?v=UM5W56AMpNI)
+
 ## Features
 
 - **LinkedIn URL Processing**: Enter a LinkedIn URL to fetch associated professional details.
