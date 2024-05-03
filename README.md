@@ -8,7 +8,7 @@ This extension for Airtable allows users to input LinkedIn URLs and retrieve cor
 
 - **LinkedIn URL Processing**: Enter a LinkedIn URL to fetch associated professional details.
 - **Data Retrieval**: Automatically retrieves and displays the name, company, and domain, along with other pertinent company information.
-- **Easy to Use**: Seamlessly integrates within Airtable with a straightforward user interface.
+- **Updates Records in Airtable**: Automatically updates the selected fields in your Airtable base with the enriched information retrieved.
 
 ## Installation
 
@@ -27,7 +27,6 @@ For detailed instructions, refer to [Remixing Extensions from GitHub](https://ai
 - **PRO Airtable Account**: This extension requires a PRO Airtable account. Airtable offers a free trial which you can sign up for [here](https://airtable.com/signup).
 - **Versium API Access**: You will need an API key from Versium to use this extension. Create an account and get your API key [here](https://app.versium.com/create-account).
 
-
 ## Usage
 
 1. **Configure the Extension**: After installation, enter your Versium API key in the extension settings.
@@ -36,7 +35,7 @@ For detailed instructions, refer to [Remixing Extensions from GitHub](https://ai
 
 ## Documentation
 
-For a detailed tutorial on building and deploying this extension, visit our blog at [Lunchpail Labs Blog: Versium for Airtable Tutorial](https://lunchpaillabs.com/blog/versium-for-airtable).
+For a detailed tutorial on building and deploying this extension, visit our blog at [Lunchpail Labs Blog: Versium for Airtable Tutorial](https://lunchpaillabs.com/blog/versium-extension-for-airtable).
 
 ## Support
 
