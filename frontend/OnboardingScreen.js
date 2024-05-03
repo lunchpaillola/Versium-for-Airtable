@@ -12,14 +12,12 @@ function OnboardingScreen() {
   const base = useBase();
   const globalConfig = useGlobalConfig();
 
-  // Extracting configuration values directly
   const tableId = globalConfig.get("Table");
   const viewId = globalConfig.get("View");
   const linkedinFieldId = globalConfig.get("LinkedIn");
   const fieldMappings = globalConfig.get("fieldMappings") || {};
   const table = base.getTableByIdIfExists(tableId);
 
-  // Initialize state directly using all available configurations
   const initialState = {
     apiKey: globalConfig.get("API Key") || "",
     isLoading: false,
@@ -98,13 +96,12 @@ function OnboardingScreen() {
     const setUnknownKeyCheckResult = globalConfig.checkPermissionsForSet();
     console.log("setUnknownKeyCheckResult", setUnknownKeyCheckResult);
     if (!setUnknownKeyCheckResult.hasPermission) {
-      // Display the reason and halt further execution if permission is denied
       updateState({
         error: setUnknownKeyCheckResult.reasonDisplayString,
       });
-      return false; // Indicate permission denial
+      return false;
     }
-    return true; // Indicate permission granted
+    return true;
   }
 
   /**
@@ -115,7 +112,7 @@ function OnboardingScreen() {
    */
   const validateApiKey = async () => {
     updateState({ isLoading: true });
-    // Check global configuration permissions before making any changes
+
     if (!(await checkGlobalConfigPermissions())) {
       console.log("Insufficient permissions to set global configuration.");
       return false;
@@ -147,7 +144,6 @@ function OnboardingScreen() {
         return false;
       }
 
-      // If validation is successful, update the global configuration and UI
       await globalConfig.setAsync("API Key", apiKey);
       await navigateSteps(1);
       updateState({ isLoading: false });
@@ -196,7 +192,6 @@ function OnboardingScreen() {
 
         await navigateSteps(2);
       } else if (currentStep === 0) {
-        // If currentStep is 0, validate API key and navigate steps
         await validateApiKey();
       }
     } catch (error) {
@@ -206,7 +201,6 @@ function OnboardingScreen() {
         isLoading: false,
       });
     } finally {
-      // Ensure the loading state is updated in all scenarios
       updateState({ isLoading: false });
     }
   };

@@ -14,22 +14,21 @@ import OnboardingScreen from "./OnboardingScreen";
 import { CustomDialog } from "./components";
 
 /** Constants */
-// Airtable SDK limit: we can only update 50 records at a time. For more details, see
-// https://support.airtable.com/docs/managing-api-call-limits-in-airtable#:~:text=Airtable%20enforces%20a%20rate%20limit,given%20user%20or%20service%20account.
-const MAX_RECORDS_PER_UPDATE = 50;
+const MAX_RECORDS_PER_UPDATE = 50; // Airtable SDK limit: we can only update 50 records at a time.
 const API_ENDPOINT = "https://api.versium.com/v2";
+
+/**
+ * Main React component for the Airtable Extension, handling the configuration and interaction logic for data enrichment using Versium's API.
+ */
 
 function VersiumEnrichment() {
   const base = useBase();
   const globalConfig = useGlobalConfig();
 
-  // load the records ready to be updated
-
   const [isUpdateInProgress, setIsUpdateInProgress] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [recordUpdates, setRecordUpdates] = useState(false);
 
-  //getting configs
   const apiKey = globalConfig.get("API Key");
   const tableId = globalConfig.get("Table");
   const viewId = globalConfig.get("View");
@@ -79,6 +78,10 @@ function VersiumEnrichment() {
     [COMPANY_DOMAIN_FIELD_NAME]: undefined,
   });
 
+  /**
+   * Handles click event for the button that triggers the enrichment process.
+   */
+
   async function onButtonClick() {
     setIsUpdateInProgress(true);
     const recordUpdates = await getEnrichment(
@@ -98,6 +101,9 @@ function VersiumEnrichment() {
     setIsDialogOpen(true);
   }
 
+  /**
+   * Resets configuration steps and opens onboarding screen for reconfiguration.
+   */
   async function onReconfigureClick() {
     await globalConfig.setAsync("CurrentStep", 1);
     return <OnboardingScreen />;
@@ -175,6 +181,15 @@ function VersiumEnrichment() {
   );
 }
 
+/**
+ * Fetches enrichment data from the Versium API for each LinkedIn URL and updates Airtable records.
+ * @param {string} LinkedinFieldId - Field ID for LinkedIn URL.
+ * @param {Array} records - Array of records to be updated.
+ * @param {string} apiKey - API key for Versium API.
+ * @param {...string} fieldNames - Output field names for updating records.
+ * @returns {Array} - Array of record updates.
+ */
+
 async function getEnrichment(
   LinkedinFieldId,
   records,
@@ -188,14 +203,13 @@ async function getEnrichment(
 ) {
   const recordUpdates = [];
   for (const record of records) {
-    // For each record, we take the email address and make an API request to Versium:
     const linkedinUrl = record.getCellValueAsString(LinkedinFieldId);
     const requestUrl = `${API_ENDPOINT}/c2b?li_url=${encodeURIComponent(
       linkedinUrl
     )}`;
 
     const response = await fetch(requestUrl, {
-      method: "GET", // The Versium API requires a GET request.
+      method: "GET",
       headers: {
         "X-Versium-Api-Key": apiKey,
       },
@@ -203,15 +217,13 @@ async function getEnrichment(
 
     const responseJson = await response.json();
 
-    // Check if there are results and extract the needed information
     if (
       responseJson.versium &&
       responseJson.versium.results &&
       responseJson.versium.results.length > 0
     ) {
-      const result = responseJson.versium.results[0]; // Assuming we're only interested in the first result
+      const result = responseJson.versium.results[0];
 
-      // Update the record with the Business and Email Address from Versium's response
       recordUpdates.push({
         id: record.id,
         fields: {
@@ -225,24 +237,31 @@ async function getEnrichment(
       });
     }
 
-    // Wait a short time between requests to avoid rate limiting
     await delayAsync(50);
   }
   return recordUpdates;
 }
 
+/**
+ * Updates Airtable records in batches, adhering to API limits.
+ * @param {object} table - Airtable table object.
+ * @param {Array} recordUpdates - Array of updates to be processed.
+ */
+
 async function updateRecordsInBatchesAsync(table, recordUpdates) {
-  // Fetches & saves the updates in batches of MAX_RECORDS_PER_UPDATE to stay under size limits.
   let i = 0;
   while (i < recordUpdates.length) {
     const updateBatch = recordUpdates.slice(i, i + MAX_RECORDS_PER_UPDATE);
-    // await is used to wait for the update to finish saving to Airtable servers before
-    // continuing. This means we'll stay under the rate limit for writes.
     await table.updateRecordsAsync(updateBatch);
     i += MAX_RECORDS_PER_UPDATE;
   }
 }
 
+/**
+ * Delays execution by a specified number of milliseconds.
+ * @param {number} ms - Milliseconds to delay.
+ * @returns {Promise} - A promise that resolves after the delay.
+ */
 function delayAsync(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
