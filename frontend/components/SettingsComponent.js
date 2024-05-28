@@ -25,7 +25,7 @@ const SettingsComponent = ({
 }) => (
   <Box>
     <Heading style={{ fontWeight: "bold", marginBottom: "16px" }}>
-      Settings
+      Configure enrichment
     </Heading>
     <Label>Select the table with the records you want to enrich:</Label>
     <TablePicker

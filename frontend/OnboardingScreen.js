@@ -206,7 +206,13 @@ function OnboardingScreen() {
   };
 
   return (
-    <Box display="flex" flexDirection="column" padding={3}>
+    <Box
+      display="flex"
+      flexDirection="column"
+      padding={3}
+      maxWidth="640px"
+      margin="auto"
+    >
       {(currentStep === 0 || !apiKey) && (
         <APIKeyInput
           apiKey={apiKey}

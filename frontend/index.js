@@ -111,15 +111,12 @@ function VersiumEnrichment() {
 
   return (
     <Box
-      position="absolute"
-      top="0"
-      bottom="0"
-      left="0"
-      right="0"
       display="flex"
       flexDirection="column"
       justifyContent="center"
+      maxWidth="640px"
       padding={3}
+      margin="auto"
     >
       <Heading style={{ fontWeight: "bold", marginBottom: "16px" }}>
         Enrich {recordCount} Records in the {tableName} table
